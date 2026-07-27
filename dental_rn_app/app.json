@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "DentalAI",
+    "slug": "dental-ai",
+    "version": "1.0.0",
+    "scheme": "dentalai",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.samikshasen.dentalai"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "a0671940-5fd5-4e58-aaf6-09d7de19a081"
+      }
+    },
+    "owner": "samiksha08",
+    "plugins": [
+      "expo-router"
+    ]
+  }
+}

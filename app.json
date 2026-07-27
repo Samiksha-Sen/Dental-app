@@ -1,0 +1,13 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "1659141e-975a-4e91-baa5-4b6b18813802"
+      }
+    },
+    "owner": "samiksha08",
+    "android": {
+      "package": "com.samiksha08.app"
+    }
+  }
+}
