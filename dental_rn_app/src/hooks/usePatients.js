@@ -27,12 +27,14 @@ export function usePatients() {
       dbId: p.id,
       id: p.patient_code,
       name: p.name,
+      phone: p.phone || '',
+      age: p.age ?? null,
       status: p.status,
       badge: p.badge,
       desc: p.description,
       history: [...(p.patient_history || [])]
         .sort((a, b) => new Date(b.event_date) - new Date(a.event_date))
-        .map(h => ({ date: formatHistoryDate(h.event_date), title: h.title, type: h.type, imageUrl: h.image_url }))
+        .map(h => ({ date: formatHistoryDate(h.event_date), rawDate: h.event_date, title: h.title, type: h.type, imageUrl: h.image_url }))
     }));
 
     setPatients(mapped);
@@ -44,18 +46,30 @@ export function usePatients() {
     loadPatients();
   }, [loadPatients]);
 
-  const createPatient = useCallback(async ({ name, allergies, status }) => {
+  const createPatient = useCallback(async ({ name, phone, age, allergies, status }) => {
     if (!name.trim()) {
       return { error: new Error('Please enter patient name.') };
     }
+    if (!/^\d{10}$/.test(phone || '')) {
+      return { error: new Error('Please enter a valid 10-digit mobile number.') };
+    }
+    const ageNum = Number(age);
+    if (!age || Number.isNaN(ageNum) || ageNum <= 0 || ageNum > 119) {
+      return { error: new Error('Please enter a valid age.') };
+    }
 
-    const patientId = `PT-${Math.floor(10000 + Math.random() * 90000)}`;
+    const { data: patientId, error: idError } = await databaseService.getNextPatientCode();
+    if (idError) {
+      return { error: idError };
+    }
     const badgeType = status === 'Urgent Care' ? 'urgent' : status === 'Pending' ? 'pending' : 'cleared';
     const description = `Allergies: ${allergies.trim() || 'None'}. New patient profile registered.`;
 
     const { data: insertedPatient, error: insertError } = await databaseService.createPatient({
       patient_code: patientId,
       name: name.trim(),
+      phone,
+      age: ageNum,
       status,
       badge: badgeType,
       description,
@@ -80,6 +94,8 @@ export function usePatients() {
       dbId: insertedPatient.id,
       id: insertedPatient.patient_code,
       name: insertedPatient.name,
+      phone: insertedPatient.phone || '',
+      age: insertedPatient.age ?? null,
       status: insertedPatient.status,
       badge: insertedPatient.badge,
       desc: insertedPatient.description,
@@ -137,5 +153,47 @@ export function usePatients() {
     return { error: null };
   }, [patients]);
 
-  return { patients, patientsLoaded, patientsError, loadPatients, createPatient, saveScanToEHR };
+  const updatePatient = useCallback(async (patientDbId, { name, phone, age }) => {
+    if (!name.trim()) {
+      return { error: new Error('Please enter patient name.') };
+    }
+    if (!/^\d{10}$/.test(phone || '')) {
+      return { error: new Error('Please enter a valid 10-digit mobile number.') };
+    }
+    const ageNum = Number(age);
+    if (!age || Number.isNaN(ageNum) || ageNum <= 0 || ageNum > 119) {
+      return { error: new Error('Please enter a valid age.') };
+    }
+
+    const { data: updatedPatient, error: updateError } = await databaseService.updatePatientContactInfo(patientDbId, {
+      name: name.trim(),
+      phone,
+      age: ageNum,
+    });
+
+    if (updateError) {
+      console.error('Failed to update patient contact info in Supabase', updateError);
+      return { error: updateError };
+    }
+
+    setPatients(prev => prev.map(p => (
+      p.dbId === patientDbId ? { ...p, name: updatedPatient.name, phone: updatedPatient.phone || '', age: updatedPatient.age ?? null } : p
+    )));
+
+    return { data: updatedPatient, error: null };
+  }, []);
+
+  const deletePatient = useCallback(async (patientDbId) => {
+    const { error } = await databaseService.deletePatient(patientDbId);
+    if (error) {
+      console.error('Failed to delete patient in Supabase', error);
+      return { error };
+    }
+
+    setPatients(prev => prev.filter(p => p.dbId !== patientDbId));
+
+    return { error: null };
+  }, []);
+
+  return { patients, patientsLoaded, patientsError, loadPatients, createPatient, updatePatient, deletePatient, saveScanToEHR };
 }

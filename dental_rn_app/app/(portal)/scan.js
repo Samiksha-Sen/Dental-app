@@ -16,6 +16,7 @@ import {
 } from 'lucide-react-native';
 import GlassCard from '../../src/components/GlassCard';
 import GradientButton from '../../src/components/GradientButton';
+import PatientSearchSelect from '../../src/components/PatientSearchSelect';
 import CircularGauge from '../../src/components/CircularGauge';
 import LaserScanLine from '../../src/animations/LaserScanLine';
 import FadeSlideIn from '../../src/animations/FadeSlideIn';
@@ -322,6 +323,7 @@ export default function Scan() {
 
   const imageUri = selectedImage || selectedFile;
   const isCaries = predictionCondition === 'Caries Detected';
+  const activePatient = patients.find((p) => p.name === activePatientName) || null;
 
   const onSave = async () => {
     await handleSaveScanToEHR();
@@ -375,6 +377,7 @@ export default function Scan() {
           <Text style={styles.title}>AI Diagnostics Report</Text>
           <Text style={styles.patientLine}>
             Patient: <Text style={styles.patientLineName}>{activePatientName}</Text>
+            {activePatient ? <Text style={styles.patientLineName}> ({activePatient.id})</Text> : null}
           </Text>
         </FadeSlideIn>
 
@@ -459,20 +462,11 @@ export default function Scan() {
         <FadeSlideIn delay={60}>
           <GlassCard style={{ paddingVertical: spacing.md }}>
             <Text style={styles.label}>Select Patient for Scan</Text>
-            <View style={styles.chipRow}>
-              {patients.map((p) => {
-                const active = activePatientName === p.name;
-                return (
-                  <TouchableOpacity
-                    key={p.id}
-                    style={[styles.chip, active && styles.chipActive]}
-                    onPress={() => setActivePatientName(p.name)}
-                  >
-                    <Text style={[styles.chipTxt, active && styles.chipTxtActive]}>{p.name}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+            <PatientSearchSelect
+              patients={patients}
+              value={activePatient}
+              onSelect={(p) => setActivePatientName(p ? p.name : '')}
+            />
           </GlassCard>
         </FadeSlideIn>
 

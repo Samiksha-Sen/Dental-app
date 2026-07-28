@@ -46,7 +46,8 @@ create table if not exists public.scans (
   prediction text,
   confidence double precision,
   uploaded_at timestamptz not null default now(),
-  status text not null default 'pending'
+  status text not null default 'pending',
+  favourite boolean not null default false
 );
 
 alter table public.scans enable row level security;
@@ -128,6 +129,8 @@ create table if not exists public.patients (
   id           uuid primary key default gen_random_uuid(),
   patient_code text not null unique,
   name         text not null,
+  phone        text not null default '',
+  age          integer not null default 0,
   status       text not null default 'Healthy Clear',
   badge        text not null default 'cleared',
   description  text not null default '',
@@ -242,22 +245,22 @@ create policy "Users can delete their own X-ray images (DELETE)"
 -- ============================================================================
 -- 6. DEMO DATA SEEDING (FOR PATIENTS / CLINICAL DASHBOARD)
 -- ============================================================================
-insert into public.patients (patient_code, name, status, badge, description) values
-  ('PT-49201', 'Anjali Mishra', 'Urgent Care', 'urgent', 'Allergies: Penicillin. Demineralization mapped mesial margin.'),
-  ('PT-39185', 'Ramesh Kumar', 'Pending', 'pending', 'Allergies: None. Follow-up scanner schedules.'),
-  ('PT-82903', 'Suresh Sharma', 'Healthy Clear', 'cleared', 'Allergies: Sulfa Drugs. Diagnostic parameters normal.')
+insert into public.patients (patient_code, name, phone, age, status, badge, description) values
+  ('PAT-0002', 'Anjali Mishra', '9345678901', 29, 'Urgent Care', 'urgent', 'Allergies: Penicillin. Demineralization mapped mesial margin.'),
+  ('PAT-0001', 'Ramesh Kumar', '9123456780', 42, 'Pending', 'pending', 'Allergies: None. Follow-up scanner schedules.'),
+  ('PAT-0003', 'Suresh Sharma', '9988776655', 51, 'Healthy Clear', 'cleared', 'Allergies: Sulfa Drugs. Diagnostic parameters normal.')
 on conflict (patient_code) do nothing;
 
 insert into public.patient_history (patient_id, title, type, event_date)
   select id, 'Deep Caries Mapped — Surgical Extraction Recommended', 'caries', now()
-  from public.patients where patient_code = 'PT-49201'
+  from public.patients where patient_code = 'PAT-0002'
   union all
   select id, 'Prophylaxis scaler cleaning', 'regular', '2025-09-14'
-  from public.patients where patient_code = 'PT-49201'
+  from public.patients where patient_code = 'PAT-0002'
   union all
   select id, 'Routine visual inspection', 'regular', '2025-09-10'
-  from public.patients where patient_code = 'PT-39185'
+  from public.patients where patient_code = 'PAT-0001'
   union all
   select id, 'Comprehensive oral exam', 'cleared', '2025-08-01'
-  from public.patients where patient_code = 'PT-82903'
+  from public.patients where patient_code = 'PAT-0003'
 on conflict do nothing;

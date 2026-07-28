@@ -1,23 +1,23 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Layers, ShieldAlert, Users as UsersIcon, ScanLine, Users, MessageCircle, Sparkles } from 'lucide-react-native';
+import { Layers, ShieldAlert, Users as UsersIcon, ScanLine, Users, Sparkles, CalendarDays } from 'lucide-react-native';
 import { router } from 'expo-router';
-import GlassCard from '../../src/components/GlassCard';
-import StatCard from '../../src/components/StatCard';
-import Badge from '../../src/components/Badge';
-import PressableScale from '../../src/components/PressableScale';
-import FadeSlideIn from '../../src/animations/FadeSlideIn';
-import ShimmerSweep from '../../src/animations/ShimmerSweep';
-import { useAuth } from '../../src/hooks/useAuth';
-import { usePatients } from '../../src/hooks/usePatients';
-import { useScanHistory } from '../../src/hooks/useScanHistory';
-import { colors, gradients, radii, spacing, typography } from '../../src/theme/tokens';
+import GlassCard from '../../../src/components/GlassCard';
+import ClickableStatCard from '../../../src/components/dashboard/ClickableStatCard';
+import Badge from '../../../src/components/Badge';
+import PressableScale from '../../../src/components/PressableScale';
+import FadeSlideIn from '../../../src/animations/FadeSlideIn';
+import ShimmerSweep from '../../../src/animations/ShimmerSweep';
+import { useAuth } from '../../../src/hooks/useAuth';
+import { usePatients } from '../../../src/hooks/usePatients';
+import { useScanHistory } from '../../../src/hooks/useScanHistory';
+import { colors, gradients, radii, spacing, typography } from '../../../src/theme/tokens';
 
 const QUICK_ACTIONS = [
   { key: 'scan', label: 'Scan X-Ray', Icon: ScanLine, color: colors.primary },
+  { key: 'appointments', label: 'Appointments', Icon: CalendarDays, color: colors.cyanLight },
   { key: 'patients', label: 'Patients', Icon: Users, color: colors.success },
-  { key: 'chat', label: 'AI Chat', Icon: MessageCircle, color: colors.primaryPurple },
 ];
 
 export default function Dashboard() {
@@ -54,23 +54,26 @@ export default function Dashboard() {
 
       <FadeSlideIn delay={80}>
         <View style={styles.statsRow}>
-          <StatCard
+          <ClickableStatCard
             icon={<Layers color={colors.primary} size={19} />}
             label="Total AI Scans"
             value={scanHistory.length}
             color={colors.primary}
+            onPress={() => router.push('/(portal)/dashboard/ai-scans')}
           />
-          <StatCard
+          <ClickableStatCard
             icon={<ShieldAlert color={colors.danger} size={19} />}
             label="Severe Caries"
             value={patients.filter((p) => p.badge === 'urgent').length}
             color={colors.danger}
+            onPress={() => router.push('/(portal)/dashboard/severe-caries')}
           />
-          <StatCard
+          <ClickableStatCard
             icon={<UsersIcon color={colors.cyanLight} size={19} />}
             label="Patients Tracked"
             value={patients.length}
             color={colors.cyanLight}
+            onPress={() => router.push('/(portal)/dashboard/patients')}
           />
         </View>
       </FadeSlideIn>

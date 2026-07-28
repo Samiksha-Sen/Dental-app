@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, ScrollView, TouchableOpacity, Modal, Image, StyleSheet } from 'react-native';
 import { MotiView, AnimatePresence } from 'moti';
-import { Search, Plus, X, User } from 'lucide-react-native';
+import { Search, Plus, X, User, Phone, Pencil, Trash2 } from 'lucide-react-native';
 import { useLocalSearchParams } from 'expo-router';
 import GlassCard from '../../src/components/GlassCard';
 import GradientButton from '../../src/components/GradientButton';
 import Badge from '../../src/components/Badge';
 import PressableScale from '../../src/components/PressableScale';
+import ConfirmModal from '../../src/components/ConfirmModal';
 import FadeSlideIn from '../../src/animations/FadeSlideIn';
 import SuccessCheckmark from '../../src/animations/SuccessCheckmark';
 import { usePatients } from '../../src/hooks/usePatients';
@@ -14,14 +15,32 @@ import { colors, gradients, radii, spacing, typography } from '../../src/theme/t
 
 const STATUS_OPTIONS = ['Healthy Clear', 'Pending', 'Urgent Care'];
 
-function PatientCard({ p, expanded, onPress }) {
+function PatientCard({ p, expanded, onPress, onEdit, onDelete }) {
   return (
     <PressableScale onPress={onPress} scaleTo={0.985} innerStyle={styles.patientCard}>
       <View style={styles.patientTop}>
         <Text style={styles.patientName}>{p.name}</Text>
-        <Badge badge={p.badge} label={p.status} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+          <Badge badge={p.badge} label={p.status} />
+          <TouchableOpacity
+            style={styles.editBtn}
+            onPress={(e) => { e.stopPropagation?.(); onEdit(p); }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Pencil color={colors.textMuted} size={14} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.editBtn}
+            onPress={(e) => { e.stopPropagation?.(); onDelete(p); }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Trash2 color={colors.danger} size={14} />
+          </TouchableOpacity>
+        </View>
       </View>
-      <Text style={styles.patientMeta}>Patient ID: {p.id}</Text>
+      <Text style={styles.patientMeta}>
+        Patient ID: {p.id}{p.age != null ? ` · Age: ${p.age}` : ''}{p.phone ? ` · Phone: ${p.phone}` : ''}
+      </Text>
 
       <AnimatePresence>
         {expanded && (
@@ -58,21 +77,46 @@ function PatientCard({ p, expanded, onPress }) {
 
 export default function Patients() {
   const params = useLocalSearchParams();
-  const { patients, patientsLoaded, patientsError, createPatient } = usePatients();
+  const { patients, patientsLoaded, patientsError, createPatient, updatePatient, deletePatient } = usePatients();
 
   const [patientSearch, setPatientSearch] = useState('');
   const [activePatientName, setActivePatientName] = useState(params.name || '');
   const [newPatientName, setNewPatientName] = useState('');
+  const [newPatientPhone, setNewPatientPhone] = useState('');
+  const [newPatientPhoneError, setNewPatientPhoneError] = useState('');
+  const [newPatientAge, setNewPatientAge] = useState('');
+  const [newPatientAgeError, setNewPatientAgeError] = useState('');
   const [newPatientAllergies, setNewPatientAllergies] = useState('');
   const [newPatientStatus, setNewPatientStatus] = useState('Healthy Clear');
   const [formVisible, setFormVisible] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
 
-  const filtered = patients.filter((p) => p.name.toLowerCase().includes(patientSearch.toLowerCase()));
+  const [editingPatient, setEditingPatient] = useState(null);
+  const [editName, setEditName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editPhoneError, setEditPhoneError] = useState('');
+  const [editAge, setEditAge] = useState('');
+  const [editAgeError, setEditAgeError] = useState('');
+
+  const [pendingDelete, setPendingDelete] = useState(null);
+
+  const PHONE_INVALID_MSG = 'Please enter a valid 10-digit mobile number.';
+  const AGE_INVALID_MSG = 'Please enter a valid age.';
+
+  const filtered = patients.filter((p) => {
+    const q = patientSearch.toLowerCase();
+    return (
+      p.name.toLowerCase().includes(q) ||
+      p.id.toLowerCase().includes(q) ||
+      (p.phone || '').includes(patientSearch.replace(/\s/g, ''))
+    );
+  });
 
   const handleSaveNewPatient = async () => {
     const { error } = await createPatient({
       name: newPatientName,
+      phone: newPatientPhone,
+      age: newPatientAge,
       allergies: newPatientAllergies,
       status: newPatientStatus,
     });
@@ -82,8 +126,24 @@ export default function Patients() {
     }
     alert(`Success: Registered patient ${newPatientName.trim()}!`);
     setNewPatientName('');
+    setNewPatientPhone('');
+    setNewPatientPhoneError('');
+    setNewPatientAge('');
+    setNewPatientAgeError('');
     setNewPatientAllergies('');
     setNewPatientStatus('Healthy Clear');
+  };
+
+  const onChangeNewPatientPhone = (v) => {
+    const digitsOnly = v.replace(/[^0-9]/g, '').slice(0, 10);
+    setNewPatientPhone(digitsOnly);
+    if (newPatientPhoneError) setNewPatientPhoneError('');
+  };
+
+  const onChangeNewPatientAge = (v) => {
+    const digitsOnly = v.replace(/[^0-9]/g, '').slice(0, 3);
+    setNewPatientAge(digitsOnly);
+    if (newPatientAgeError) setNewPatientAgeError('');
   };
 
   const onSave = async () => {
@@ -91,10 +151,71 @@ export default function Patients() {
       alert('Please enter patient name.');
       return;
     }
+    if (!/^\d{10}$/.test(newPatientPhone)) {
+      setNewPatientPhoneError(PHONE_INVALID_MSG);
+      return;
+    }
+    const ageNum = Number(newPatientAge);
+    if (!newPatientAge || Number.isNaN(ageNum) || ageNum <= 0 || ageNum > 119) {
+      setNewPatientAgeError(AGE_INVALID_MSG);
+      return;
+    }
     await handleSaveNewPatient();
     setFormVisible(false);
     setJustSaved(true);
     setTimeout(() => setJustSaved(false), 1600);
+  };
+
+  const onOpenEdit = (p) => {
+    setEditingPatient(p);
+    setEditName(p.name);
+    setEditPhone(p.phone || '');
+    setEditPhoneError('');
+    setEditAge(p.age != null ? String(p.age) : '');
+    setEditAgeError('');
+  };
+
+  const onChangeEditPhone = (v) => {
+    const digitsOnly = v.replace(/[^0-9]/g, '').slice(0, 10);
+    setEditPhone(digitsOnly);
+    if (editPhoneError) setEditPhoneError('');
+  };
+
+  const onChangeEditAge = (v) => {
+    const digitsOnly = v.replace(/[^0-9]/g, '').slice(0, 3);
+    setEditAge(digitsOnly);
+    if (editAgeError) setEditAgeError('');
+  };
+
+  const onSaveEdit = async () => {
+    if (!editName.trim()) {
+      alert('Please enter patient name.');
+      return;
+    }
+    if (!/^\d{10}$/.test(editPhone)) {
+      setEditPhoneError(PHONE_INVALID_MSG);
+      return;
+    }
+    const ageNum = Number(editAge);
+    if (!editAge || Number.isNaN(ageNum) || ageNum <= 0 || ageNum > 119) {
+      setEditAgeError(AGE_INVALID_MSG);
+      return;
+    }
+    const { error } = await updatePatient(editingPatient.dbId, { name: editName, phone: editPhone, age: editAge });
+    if (error) {
+      alert(`Error: Failed to update patient — ${error.message}`);
+      return;
+    }
+    setEditingPatient(null);
+  };
+
+  const onConfirmDelete = async () => {
+    const target = pendingDelete;
+    setPendingDelete(null);
+    const { error } = await deletePatient(target.dbId);
+    if (error) {
+      alert(`Error: Failed to delete patient — ${error.message}`);
+    }
   };
 
   return (
@@ -108,7 +229,7 @@ export default function Patients() {
           <Search color={colors.textMuted} size={16} style={{ marginLeft: spacing.md }} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search by patient name..."
+            placeholder="Search by name, Patient ID, or phone..."
             placeholderTextColor={colors.textMuted}
             value={patientSearch}
             onChangeText={setPatientSearch}
@@ -135,6 +256,8 @@ export default function Patients() {
               p={p}
               expanded={activePatientName === p.name}
               onPress={() => setActivePatientName(activePatientName === p.name ? '' : p.name)}
+              onEdit={onOpenEdit}
+              onDelete={setPendingDelete}
             />
           </FadeSlideIn>
         ))}
@@ -165,6 +288,33 @@ export default function Patients() {
                 placeholder="Enter full name"
                 placeholderTextColor={colors.textMuted}
               />
+
+              <Text style={styles.label}>Phone Number</Text>
+              <View style={[styles.phoneInputRow, newPatientPhoneError && styles.phoneInputRowError]}>
+                <Phone color={colors.textMuted} size={16} />
+                <TextInput
+                  style={styles.phoneInput}
+                  value={newPatientPhone}
+                  onChangeText={onChangeNewPatientPhone}
+                  placeholder="Enter patient's 10-digit mobile number"
+                  placeholderTextColor={colors.textMuted}
+                  keyboardType="number-pad"
+                  maxLength={10}
+                />
+              </View>
+              {!!newPatientPhoneError && <Text style={styles.fieldErrorTxt}>{newPatientPhoneError}</Text>}
+
+              <Text style={styles.label}>Age</Text>
+              <TextInput
+                style={[styles.input, newPatientAgeError && styles.inputError]}
+                value={newPatientAge}
+                onChangeText={onChangeNewPatientAge}
+                placeholder="Enter patient's age"
+                placeholderTextColor={colors.textMuted}
+                keyboardType="number-pad"
+                maxLength={3}
+              />
+              {!!newPatientAgeError && <Text style={styles.fieldErrorTxt}>{newPatientAgeError}</Text>}
 
               <Text style={styles.label}>Allergies / Special Notes</Text>
               <TextInput
@@ -202,6 +352,82 @@ export default function Patients() {
           </MotiView>
         </View>
       </Modal>
+
+      <Modal visible={!!editingPatient} transparent animationType="none" onRequestClose={() => setEditingPatient(null)}>
+        <View style={styles.sheetBackdrop}>
+          <MotiView
+            from={{ translateY: 400, opacity: 0 }}
+            animate={{ translateY: 0, opacity: 1 }}
+            exit={{ translateY: 400, opacity: 0 }}
+            transition={{ type: 'spring', damping: 18, stiffness: 200 }}
+            style={styles.sheet}
+          >
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle}>Edit Patient</Text>
+              <TouchableOpacity onPress={() => setEditingPatient(null)}>
+                <X color={colors.textMuted} size={20} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <Text style={styles.label}>Patient Full Name</Text>
+              <TextInput
+                style={styles.input}
+                value={editName}
+                onChangeText={setEditName}
+                placeholder="Enter full name"
+                placeholderTextColor={colors.textMuted}
+              />
+
+              <Text style={styles.label}>Phone Number</Text>
+              <View style={[styles.phoneInputRow, editPhoneError && styles.phoneInputRowError]}>
+                <Phone color={colors.textMuted} size={16} />
+                <TextInput
+                  style={styles.phoneInput}
+                  value={editPhone}
+                  onChangeText={onChangeEditPhone}
+                  placeholder="Enter patient's 10-digit mobile number"
+                  placeholderTextColor={colors.textMuted}
+                  keyboardType="number-pad"
+                  maxLength={10}
+                />
+              </View>
+              {!!editPhoneError && <Text style={styles.fieldErrorTxt}>{editPhoneError}</Text>}
+
+              <Text style={styles.label}>Age</Text>
+              <TextInput
+                style={[styles.input, editAgeError && styles.inputError]}
+                value={editAge}
+                onChangeText={onChangeEditAge}
+                placeholder="Enter patient's age"
+                placeholderTextColor={colors.textMuted}
+                keyboardType="number-pad"
+                maxLength={3}
+              />
+              {!!editAgeError && <Text style={styles.fieldErrorTxt}>{editAgeError}</Text>}
+
+              <GradientButton
+                title="Save Changes"
+                icon={<User color="#fff" size={16} />}
+                onPress={onSaveEdit}
+                colorsOverride={gradients.success}
+                style={{ marginTop: spacing.lg, marginBottom: spacing.lg }}
+              />
+            </ScrollView>
+          </MotiView>
+        </View>
+      </Modal>
+
+      <ConfirmModal
+        visible={!!pendingDelete}
+        title="Delete this patient?"
+        message={pendingDelete ? `This will permanently remove ${pendingDelete.name} (${pendingDelete.id}) and their EHR history. This cannot be undone.` : ''}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        danger
+        onConfirm={onConfirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </ScrollView>
   );
 }
@@ -253,6 +479,19 @@ const styles = StyleSheet.create({
   input: {
     height: 46, borderRadius: radii.sm, borderWidth: 1, borderColor: colors.glassBorder,
     backgroundColor: colors.glassFill, paddingHorizontal: spacing.md, color: colors.textPrimary,
+  },
+  inputError: { borderColor: colors.danger },
+  phoneInputRow: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+    height: 46, borderRadius: radii.sm, borderWidth: 1, borderColor: colors.glassBorder,
+    backgroundColor: colors.glassFill, paddingHorizontal: spacing.md,
+  },
+  phoneInputRowError: { borderColor: colors.danger },
+  phoneInput: { flex: 1, height: 46, color: colors.textPrimary },
+  fieldErrorTxt: { color: colors.danger, fontSize: typography.caption.fontSize, marginTop: 4 },
+  editBtn: {
+    width: 26, height: 26, borderRadius: 13, backgroundColor: colors.glassFillStrong,
+    alignItems: 'center', justifyContent: 'center',
   },
   statusRow: { flexDirection: 'row', gap: 6 },
   statusChip: {

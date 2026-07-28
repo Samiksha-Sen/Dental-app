@@ -11,6 +11,8 @@ export default function FloatingInput({
   keyboardType,
   placeholder,
   maxLength,
+  icon,
+  error,
 }) {
   const [focused, setFocused] = useState(false);
   const active = focused || !!value;
@@ -20,14 +22,15 @@ export default function FloatingInput({
       <Text style={[styles.label, active && styles.labelActive]}>{label}</Text>
       <MotiView
         animate={{
-          borderColor: focused ? colors.primary : colors.glassBorder,
+          borderColor: error ? colors.danger : focused ? colors.primary : colors.glassBorder,
           shadowOpacity: focused ? 0.5 : 0,
         }}
         transition={{ type: 'timing', duration: 220 }}
         style={[styles.fieldShell, { shadowColor: colors.primary }]}
       >
+        {icon ? <View style={styles.iconWrap}>{icon}</View> : null}
         <TextInput
-          style={styles.input}
+          style={[styles.input, icon && styles.inputWithIcon]}
           value={value}
           onChangeText={onChangeText}
           onFocus={() => setFocused(true)}
@@ -39,6 +42,7 @@ export default function FloatingInput({
           maxLength={maxLength}
         />
       </MotiView>
+      {error ? <Text style={styles.errorTxt}>{error}</Text> : null}
     </View>
   );
 }
@@ -56,16 +60,30 @@ const styles = StyleSheet.create({
   },
   fieldShell: {
     alignSelf: 'stretch',
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1.5,
     borderRadius: radii.sm,
     shadowOffset: { width: 0, height: 0 },
     shadowRadius: 8,
     elevation: 2,
   },
+  iconWrap: {
+    paddingLeft: spacing.md,
+  },
   input: {
+    flex: 1,
     height: 48,
     paddingHorizontal: spacing.md,
     color: colors.textPrimary,
     fontSize: typography.body.fontSize + 1,
+  },
+  inputWithIcon: {
+    paddingLeft: spacing.sm,
+  },
+  errorTxt: {
+    color: colors.danger,
+    fontSize: typography.caption.fontSize,
+    marginTop: 6,
   },
 });

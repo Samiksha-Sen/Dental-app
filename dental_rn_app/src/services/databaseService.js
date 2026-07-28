@@ -99,7 +99,7 @@ export async function getPatients() {
   try {
     const { data, error } = await supabase
       .from('patients')
-      .select('id, patient_code, name, status, badge, description, patient_history(id, title, type, event_date, image_url, scan_id)')
+      .select('id, patient_code, name, phone, age, status, badge, description, patient_history(id, title, type, event_date, image_url, scan_id)')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -111,18 +111,45 @@ export async function getPatients() {
   }
 }
 
-export async function createPatient({ patient_code, name, status, badge, description }) {
+// Computes the next auto-incrementing hospital Patient ID in the form
+// PAT-0001, PAT-0002, ... by finding the highest existing PAT-#### code and
+// adding 1. Legacy/non-matching codes (e.g. old PT-##### values) are simply
+// ignored rather than breaking the sequence.
+export async function getNextPatientCode() {
+  try {
+    const { data, error } = await supabase.from('patients').select('patient_code');
+    if (error) {
+      return { data: null, error: handleDatabaseError(error) };
+    }
+    let maxNumber = 0;
+    (data || []).forEach((row) => {
+      const match = /^PAT-(\d+)$/.exec(row.patient_code || '');
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > maxNumber) maxNumber = num;
+      }
+    });
+    const nextCode = `PAT-${String(maxNumber + 1).padStart(4, '0')}`;
+    return { data: nextCode, error: null };
+  } catch (err) {
+    return { data: null, error: handleDatabaseError(err) };
+  }
+}
+
+export async function createPatient({ patient_code, name, phone, age, status, badge, description }) {
   try {
     const { data, error } = await supabase
       .from('patients')
       .insert({
         patient_code,
         name,
+        phone,
+        age,
         status,
         badge,
         description,
       })
-      .select('id, patient_code, name, status, badge, description')
+      .select('id, patient_code, name, phone, age, status, badge, description')
       .single();
 
     if (error) {
@@ -131,6 +158,40 @@ export async function createPatient({ patient_code, name, status, badge, descrip
     return { data, error: null };
   } catch (err) {
     return { data: null, error: handleDatabaseError(err) };
+  }
+}
+
+export async function updatePatientContactInfo(patientId, { name, phone, age }) {
+  try {
+    const { data, error } = await supabase
+      .from('patients')
+      .update({ name, phone, age })
+      .eq('id', patientId)
+      .select('id, patient_code, name, phone, age, status, badge, description')
+      .single();
+
+    if (error) {
+      return { data: null, error: handleDatabaseError(error) };
+    }
+    return { data, error: null };
+  } catch (err) {
+    return { data: null, error: handleDatabaseError(err) };
+  }
+}
+
+export async function deletePatient(patientId) {
+  try {
+    const { error } = await supabase
+      .from('patients')
+      .delete()
+      .eq('id', patientId);
+
+    if (error) {
+      return { error: handleDatabaseError(error) };
+    }
+    return { error: null };
+  } catch (err) {
+    return { error: handleDatabaseError(err) };
   }
 }
 

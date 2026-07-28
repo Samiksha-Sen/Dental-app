@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { Redirect, Tabs } from 'expo-router';
-import { LayoutDashboard, ScanLine, Users, MessageCircle, Settings, TriangleAlert } from 'lucide-react-native';
+import { LayoutDashboard, ScanLine, CalendarDays, Users, Settings, TriangleAlert } from 'lucide-react-native';
 import { useAuth } from '../../src/hooks/useAuth';
 import { isSupabaseConfigured } from '../../src/services/supabaseClient';
 import { colors, spacing, typography } from '../../src/theme/tokens';
@@ -80,17 +80,17 @@ export default function PortalLayout() {
         }}
       />
       <Tabs.Screen
+        name="appointments"
+        options={{
+          title: 'Appointments',
+          tabBarIcon: ({ color, size }) => <CalendarDays color={color} size={size ?? 22} />,
+        }}
+      />
+      <Tabs.Screen
         name="patients"
         options={{
           title: 'Patients',
           tabBarIcon: ({ color, size }) => <Users color={color} size={size ?? 22} />,
-        }}
-      />
-      <Tabs.Screen
-        name="chat"
-        options={{
-          title: 'AI Chat',
-          tabBarIcon: ({ color, size }) => <MessageCircle color={color} size={size ?? 22} />,
         }}
       />
       <Tabs.Screen
