@@ -1,0 +1,60 @@
+name: Selenium E2E Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  selenium-e2e:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dental_rn_app
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: dental_rn_app/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Export static web build
+        run: npx expo export --platform web
+
+      - name: Serve the web build in the background
+        run: npx serve dist -l 8080 &
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Selenium test dependencies
+        working-directory: testing/selenium
+        run: pip install -r requirements.txt
+
+      - name: Wait for the local server to be ready
+        run: npx wait-on http://localhost:8080
+
+      - name: Run Selenium E2E tests
+        working-directory: testing/selenium
+        env:
+          BASE_URL: http://localhost:8080
+        run: pytest -v --junitxml=results.xml
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: selenium-results
+          path: testing/selenium/results.xml
