@@ -29,6 +29,9 @@ jobs:
         run: npm ci
 
       - name: Export static web build
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+          CI: 1
         run: npx expo export --platform web
 
       - name: Serve the web build in the background
