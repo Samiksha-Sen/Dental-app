@@ -5,6 +5,7 @@ const env = require('../config/environment');
 const LoginPage = require('../pages/LoginPage');
 const ScanPage = require('../pages/ScanPage');
 const SettingsPage = require('../pages/SettingsPage');
+const { get_test_supabase_client } = require('../utilities/supabaseTestHelper');
 
 const DEVICE_PICTURES_DIR = '/sdcard/Pictures';
 
@@ -60,7 +61,7 @@ describe('Dental X-Ray Upload', function () {
     await scanPage.goToTab('scan');
   });
 
-  it('analyses a valid dental X-ray and returns a caries prediction with confidence', async () => {
+  it('@smoke analyses a valid dental X-ray and returns a caries prediction with confidence', async () => {
     await scanPage.openDropzone();
     // --- Native Android photo picker takes over here ---
     // Resource ids below match AOSP's "Photos" picker (Android 13+ Photo
@@ -74,6 +75,41 @@ describe('Dental X-Ray Upload', function () {
     const outcome = await scanPage.waitForOutcome(45000);
 
     expect(outcome).to.match(/Caries Found|No Caries Detected/);
+  });
+
+  // TC_RPT_003: cross-layer check that the UI flow actually persisted the
+  // rows scanService.js/databaseService.js are supposed to write, not just
+  // that the screen displayed a result.
+  it('persists a matching scans+reports row after a successful analysis', async () => {
+    const startedAt = new Date().toISOString();
+
+    await scanPage.openDropzone();
+    const pickerThumbnail = await driver.$('android=new UiSelector().resourceIdMatches(".*:id/icon_thumbnail")');
+    await pickerThumbnail.waitForDisplayed({ timeout: 15000 });
+    await pickerThumbnail.click();
+    await scanPage.tapAnalyse();
+    await scanPage.waitForOutcome(45000);
+
+    const supabase = get_test_supabase_client();
+    const { data: scans, error } = await supabase
+      .from('scans')
+      .select('id, status, prediction, confidence, uploaded_at')
+      .gte('uploaded_at', startedAt)
+      .order('uploaded_at', { ascending: false })
+      .limit(1);
+
+    expect(error).to.equal(null);
+    expect(scans.length).to.equal(1, 'expected exactly one new scans row created since this test started');
+    expect(scans[0].status).to.equal('completed');
+    expect(scans[0].prediction).to.be.oneOf(['Caries Detected', 'No Caries Detected']);
+
+    const { data: reports, error: reportsError } = await supabase
+      .from('reports')
+      .select('id, severity, recommendation')
+      .eq('scan_id', scans[0].id);
+
+    expect(reportsError).to.equal(null);
+    expect(reports.length).to.be.at.least(1, 'expected a reports row linked to the new scan');
   });
 
   it('rejects a non-X-ray photo with the "X-ray not found" message', async () => {

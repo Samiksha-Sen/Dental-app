@@ -23,6 +23,7 @@ function PatientCard({ p, expanded, onPress, onEdit, onDelete }) {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
           <Badge badge={p.badge} label={p.status} />
           <TouchableOpacity
+            testID={`patient-edit-button-${p.dbId || p.id}`}
             style={styles.editBtn}
             onPress={(e) => { e.stopPropagation?.(); onEdit(p); }}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -30,6 +31,7 @@ function PatientCard({ p, expanded, onPress, onEdit, onDelete }) {
             <Pencil color={colors.textMuted} size={14} />
           </TouchableOpacity>
           <TouchableOpacity
+            testID={`patient-delete-button-${p.dbId || p.id}`}
             style={styles.editBtn}
             onPress={(e) => { e.stopPropagation?.(); onDelete(p); }}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -377,6 +379,7 @@ export default function Patients() {
             <ScrollView showsVerticalScrollIndicator={false}>
               <Text style={styles.label}>Patient Full Name</Text>
               <TextInput
+                testID="patient-edit-name-input"
                 style={styles.input}
                 value={editName}
                 onChangeText={setEditName}
@@ -388,6 +391,7 @@ export default function Patients() {
               <View style={[styles.phoneInputRow, editPhoneError && styles.phoneInputRowError]}>
                 <Phone color={colors.textMuted} size={16} />
                 <TextInput
+                  testID="patient-edit-phone-input"
                   style={styles.phoneInput}
                   value={editPhone}
                   onChangeText={onChangeEditPhone}
@@ -401,6 +405,7 @@ export default function Patients() {
 
               <Text style={styles.label}>Age</Text>
               <TextInput
+                testID="patient-edit-age-input"
                 style={[styles.input, editAgeError && styles.inputError]}
                 value={editAge}
                 onChangeText={onChangeEditAge}
@@ -412,6 +417,7 @@ export default function Patients() {
               {!!editAgeError && <Text style={styles.fieldErrorTxt}>{editAgeError}</Text>}
 
               <GradientButton
+                testID="patient-edit-save-button"
                 title="Save Changes"
                 icon={<User color="#fff" size={16} />}
                 onPress={onSaveEdit}

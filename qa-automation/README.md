@@ -10,6 +10,13 @@ Three independent test runners, one merged report.
 | Backend API | PyTest + `requests` | `api-tests/` |
 | Database | PyTest + `supabase-py` (direct table checks) | `database-tests/` |
 
+See **[TEST_CASES.md](TEST_CASES.md)** for the full enterprise-format test
+case matrix (Test ID, preconditions, steps, expected result, priority,
+automation status) across all 17 modules — including the modules that turned
+out to target features the app doesn't have (a Users table, a side drawer, a
+Profile screen, backend authentication), documented as `N/A` with the reason
+rather than silently dropped.
+
 ## Why this is scoped the way it is
 
 This suite was built against the *actual* current app, not a generic
@@ -62,7 +69,9 @@ to `dental_rn_app` — additive, optional props, no behavior change:
 `dashboard-stat-total-scans`, `dashboard-stat-severe-caries`,
 `dashboard-stat-patients-tracked`, `patients-search-input`,
 `patients-add-new-button`, `patient-form-*-input`, `patient-form-save-button`,
-`patient-card-<id>`, `scan-dropzone`, `scan-analyse-button`,
+`patient-card-<id>`, `patient-edit-button-<id>`, `patient-delete-button-<id>`,
+`patient-edit-*-input`, `patient-edit-save-button`,
+`scan-dropzone`, `scan-analyse-button`,
 `scan-result-outcome`, `settings-api-url-input`, `settings-logout-button`,
 `confirm-modal-confirm-button` / `-cancel-button`, and per-tab
 `tab-dashboard` / `tab-scan` / `tab-appointments` / `tab-patients` /

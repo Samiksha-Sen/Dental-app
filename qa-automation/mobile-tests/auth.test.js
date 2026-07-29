@@ -53,7 +53,7 @@ describe('Authentication', function () {
       expect(await loginPage.isLoaded()).to.equal(true, 'should remain on the login screen after a rejected login');
     });
 
-    it('logs in with valid credentials and reaches the dashboard', async () => {
+    it('@smoke logs in with valid credentials and reaches the dashboard', async () => {
       logger.info('Attempting login with configured TEST_USER_EMAIL');
       await loginPage.login(env.testUser.email, env.testUser.password);
       const reachedDashboard = await dashboardPage.isLoaded();

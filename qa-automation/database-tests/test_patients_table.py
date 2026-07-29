@@ -2,6 +2,7 @@
 schema.sql, independent of the mobile UI. Mirrors the operations
 databaseService.js performs (insert/update/delete/select) so a schema or RLS
 regression is caught here even if the UI test suite isn't run."""
+import pytest
 
 
 def test_insert_patient_persists_expected_columns(supabase, cleanup_patient_ids, unique_patient_code):
@@ -105,6 +106,32 @@ def test_patient_history_links_to_patient_via_foreign_key(supabase, cleanup_pati
         .data
     )
     assert any(h["id"] == history_row["id"] and h["title"] == "Registration" for h in fetched["patient_history"])
+
+
+def test_duplicate_patient_code_is_rejected(supabase, cleanup_patient_ids, unique_patient_code):
+    """patient_code has a DB-level `unique` constraint (schema.sql) — unlike
+    patients.name (see patientManagement.test.js's duplicate-name case,
+    which the app *allows*), the database itself must reject a second row
+    with the same code, independent of whatever the app's own
+    getNextPatientCode() sequencing does."""
+    first = supabase.table("patients").insert({
+        "patient_code": unique_patient_code,
+        "name": "Duplicate Code QA Patient A",
+        "phone": "9222222222",
+        "age": 33,
+    }).execute().data[0]
+    cleanup_patient_ids.append(first["id"])
+
+    with pytest.raises(Exception) as exc_info:
+        supabase.table("patients").insert({
+            "patient_code": unique_patient_code,
+            "name": "Duplicate Code QA Patient B",
+            "phone": "9111111111",
+            "age": 40,
+        }).execute()
+
+    message = str(exc_info.value).lower()
+    assert "duplicate" in message or "unique" in message or "23505" in message
 
 
 def test_deleting_patient_cascades_to_patient_history(supabase, unique_patient_code):

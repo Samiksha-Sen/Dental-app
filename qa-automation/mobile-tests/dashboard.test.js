@@ -29,7 +29,7 @@ describe('Dashboard', function () {
     await dashboardPage.isLoaded();
   });
 
-  it('displays the three stat cards: Total AI Scans, Severe Caries, Patients Tracked', async () => {
+  it('@smoke displays the three stat cards: Total AI Scans, Severe Caries, Patients Tracked', async () => {
     expect(await dashboardPage.isDisplayed('dashboard-stat-total-scans')).to.equal(true);
     expect(await dashboardPage.isDisplayed('dashboard-stat-severe-caries')).to.equal(true);
     expect(await dashboardPage.isDisplayed('dashboard-stat-patients-tracked')).to.equal(true);
@@ -61,5 +61,28 @@ describe('Dashboard', function () {
     const displayedText = await dashboardPage.getPatientsTrackedCount();
     const displayedCount = parseInt(displayedText.replace(/[^0-9]/g, ''), 10);
     expect(displayedCount).to.equal(count, 'dashboard count should match Supabase patients row count');
+  });
+
+  it('shows a Total AI Scans count matching this user\'s scans row count', async () => {
+    // useScanHistory.js calls getScansByUser(user.id), which filters
+    // scans by user_id — so the dashboard number is scoped to the logged
+    // -in test account, not every row in the table. Look the test user's
+    // id up the same way the app does (via Supabase Auth), not a raw
+    // table-wide count, or this would over-count against a shared project.
+    const supabase = get_test_supabase_client();
+    const { data: usersPage, error: userErr } = await supabase.auth.admin.listUsers();
+    expect(userErr).to.equal(null);
+    const testUser = usersPage.users.find((u) => u.email === env.testUser.email);
+    expect(testUser, `expected an auth user for ${env.testUser.email}`).to.not.equal(undefined);
+
+    const { count, error } = await supabase
+      .from('scans')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', testUser.id);
+    expect(error).to.equal(null);
+
+    const displayedText = await dashboardPage.getTotalScansCount();
+    const displayedCount = parseInt(displayedText.replace(/[^0-9]/g, ''), 10);
+    expect(displayedCount).to.equal(count, "dashboard count should match this user's scans row count");
   });
 });

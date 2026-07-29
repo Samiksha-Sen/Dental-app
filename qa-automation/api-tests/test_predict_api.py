@@ -87,6 +87,17 @@ def test_predict_missing_file_field_returns_error(api_client, backend_url):
     assert body["error"] == "No file uploaded"
 
 
+def test_predict_requires_no_authentication(api_client, positive_xray_path):
+    """TC_SEC_004. This documents a real finding, not a passing security
+    control: app.py has no API key/JWT/token check on any route. A plain,
+    credential-free request succeeds exactly like an authenticated one would
+    — because there's no such thing as an authenticated request to this
+    backend. Anyone who can reach the URL can run inference for free."""
+    response = api_client.predict(positive_xray_path, threshold=0.85)
+    assert response.status_code == 200
+    assert "error" not in response.json()
+
+
 def test_predict_latency_is_within_budget(api_client, positive_xray_path):
     response = api_client.predict(positive_xray_path, threshold=0.85)
     # Two model inferences (validator + caries) per request on CPU; generous

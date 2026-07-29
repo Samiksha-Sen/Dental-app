@@ -28,6 +28,31 @@ class PatientsPage extends BasePage {
   async isPatientCardVisible(dbId) {
     return this.isDisplayed(`patient-card-${dbId}`);
   }
+
+  async openEditForm(dbId) {
+    await this.tapTestId(`patient-edit-button-${dbId}`);
+  }
+
+  async fillEditForm({ name, phone, age }) {
+    if (name !== undefined) await this.typeInto('patient-edit-name-input', name);
+    if (phone !== undefined) await this.typeInto('patient-edit-phone-input', phone);
+    if (age !== undefined) await this.typeInto('patient-edit-age-input', age);
+  }
+
+  async submitEditForm() {
+    await this.tapTestId('patient-edit-save-button');
+  }
+
+  async editPatient(dbId, { name, phone, age }) {
+    await this.openEditForm(dbId);
+    await this.fillEditForm({ name, phone, age });
+    await this.submitEditForm();
+  }
+
+  async deletePatient(dbId, { confirm = true } = {}) {
+    await this.tapTestId(`patient-delete-button-${dbId}`);
+    await this.tapTestId(confirm ? 'confirm-modal-confirm-button' : 'confirm-modal-cancel-button');
+  }
 }
 
 module.exports = PatientsPage;
