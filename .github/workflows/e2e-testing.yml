@@ -9,6 +9,27 @@ on:
 
 jobs:
   # ---------------------------------------------------------------------
+  # Secrets can't be referenced directly in a job-level `if:` condition, so
+  # this job converts their presence into a plain job output that mobile-e2e
+  # can gate on below — the documented workaround, not a formatting choice.
+  # ---------------------------------------------------------------------
+  check-secrets:
+    runs-on: ubuntu-latest
+    outputs:
+      mobile_secrets_present: ${{ steps.check.outputs.present }}
+    steps:
+      - id: check
+        env:
+          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        run: |
+          if [ -n "$TEST_USER_EMAIL" ] && [ -n "$SUPABASE_URL" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ---------------------------------------------------------------------
   # API + Database tests: fast, no Android emulator needed. Runs the real
   # Flask backend locally and exercises the actual /health and /predict
   # contract, then validates Supabase table state directly.
@@ -84,13 +105,13 @@ jobs:
   # ---------------------------------------------------------------------
   mobile-e2e:
     runs-on: ubuntu-latest
-    needs: api-and-database-tests
+    needs: [check-secrets, api-and-database-tests]
     # Needs a real Supabase test account to log in with — skips gracefully
     # (shown as "skipped", not a failing red X) until TEST_USER_EMAIL /
     # TEST_USER_PASSWORD / SUPABASE_URL / SUPABASE_KEY secrets are added to
     # this repo (Settings > Secrets and variables > Actions). See
     # qa-automation/README.md "Enabling the mobile E2E job".
-    if: ${{ secrets.TEST_USER_EMAIL != '' && secrets.SUPABASE_URL != '' }}
+    if: needs.check-secrets.outputs.mobile_secrets_present == 'true'
     env:
       BACKEND_URL: http://10.0.2.2:5000 # host loopback alias, as seen from inside the Android emulator
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
