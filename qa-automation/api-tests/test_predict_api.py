@@ -32,15 +32,27 @@ def test_predict_valid_xray_returns_condition_and_confidence(api_client, positiv
 
 
 def test_predict_confidence_moves_with_threshold(api_client, positive_xray_path):
-    """Sanity check on predict_caries()'s branching: a much higher threshold
-    should never flip a "Caries Found" result to found at higher confidence
-    than it already was scored at — this just proves threshold is actually
-    wired through, not hardcoded."""
-    low = api_client.predict(positive_xray_path, threshold=0.01).json()
-    high = api_client.predict(positive_xray_path, threshold=0.99).json()
+    """Sanity check that `threshold` is actually wired into predict_caries(),
+    not hardcoded. The API only returns a transformed confidence_percent
+    (raw*100 if Found, (1-raw)*100 if not), so rather than assuming which
+    way any given sample happens to score, back out its approximate raw
+    model score from a baseline call and assert the condition flips on
+    either side of that score — true for any sample, not just one that
+    happens to sit mid-range."""
+    baseline = api_client.predict(positive_xray_path, threshold=0.85).json()
+    assert "error" not in baseline
+
+    if baseline["condition"] == "Caries Found":
+        raw_score = baseline["confidence"] / 100
+    else:
+        raw_score = 1 - (baseline["confidence"] / 100)
+
+    below = max(raw_score - 0.05, 0.001)
+    above = min(raw_score + 0.05, 0.999)
+
+    low = api_client.predict(positive_xray_path, threshold=below).json()
+    high = api_client.predict(positive_xray_path, threshold=above).json()
     assert "error" not in low and "error" not in high
-    # With threshold≈0.01 nearly everything reads as "Caries Found"; with
-    # threshold≈0.99 nearly everything reads as "No Caries Detected".
     assert low["condition"] == "Caries Found"
     assert high["condition"] == "No Caries Detected"
 
