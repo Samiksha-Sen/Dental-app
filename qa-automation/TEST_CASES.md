@@ -254,7 +254,7 @@ Reports" maps to the real `reports` table (linked to `scans`).
 
 | Test ID | Scenario | Expected Result | Validation | Priority | Automation |
 |---|---|---|---|---|---|
-| TC_SEC_001 | SQL injection string in login email | Rejected as invalid credentials, not executed as SQL (Supabase client is parameterized) | UI/Security | High | Automated — `auth.test.js` (TC_AUTH_006) |
+| TC_SEC_001 | SQL injection string in login email | Rejected as invalid credentials, not executed as SQL (Supabase client is parameterized) | UI/Security | High | Automatable — same as TC_AUTH_006, a data-row addition to `auth.test.js`'s existing rejected-login test; not yet written as its own case |
 | TC_SEC_002 | Special/stored characters in patient name are stored and rendered safely | No script execution, no corruption on read-back | UI/Database/Security | Medium | Automated — `mobile-tests/securityAndSanitization.test.js` |
 | TC_SEC_003 | Anonymous Supabase key can read `patient_history` | Confirmed allowed by current RLS policy (`using (true)`) — documents the real, current posture | Database/Security | Medium | Automated — `database-tests/test_security_rls.py` |
 | TC_SEC_004 | `/predict` accepts unauthenticated requests | Confirmed — no auth check exists in `app.py` | API/Security | High | Automated — `api-tests/test_predict_api.py::test_predict_requires_no_authentication` (documents the finding) |

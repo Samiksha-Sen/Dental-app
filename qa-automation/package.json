@@ -7,7 +7,10 @@
     "test:mobile": "mocha --config .mocharc.json",
     "test:mobile:smoke": "mocha --config .mocharc.json --grep @smoke",
     "report:excel": "node utilities/excelReporter.js",
-    "posttest:mobile": "npm run report:excel"
+    "posttest:mobile": "npm run report:excel",
+    "catalog:build": "node utilities/buildTestCatalogFromMarkdown.js",
+    "ci-history:fetch": "node utilities/fetchGithubActionsHistory.js",
+    "report:test-management": "node utilities/testManagementReportGenerator.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
