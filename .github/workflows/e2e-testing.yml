@@ -188,9 +188,9 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: |
-            npm install -g appium@2
+            npm install -g appium@latest
             appium driver install uiautomator2
-            appium --base-path /wd/hub --port 4723 --log-timestamp > appium.log 2>&1 &
+            appium --port 4723 --log-timestamp > appium.log 2>&1 &
             npx --yes wait-on tcp:4723 --timeout 60000
             cd qa-automation
             npm run test:mobile

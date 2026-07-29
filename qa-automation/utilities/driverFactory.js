@@ -12,6 +12,10 @@ async function createDriver() {
     device: env.device.name,
   });
 
+  // No `path` set here — defaults to webdriverio's "/", which must match
+  // however the Appium server is started (no --base-path flag). A mismatch
+  // here (e.g. server started with --base-path /wd/hub) fails silently as
+  // a connection/session-creation error with no obvious cause.
   activeDriver = await remote({
     hostname: env.appium.host,
     port: env.appium.port,

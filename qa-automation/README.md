@@ -118,7 +118,7 @@ pytest database-tests   # needs SUPABASE_* env vars
 
 # Mobile (needs a running Android emulator/device + Appium server)
 cd dental_rn_app && npx expo prebuild --platform android && cd android && ./gradlew assembleDebug
-appium --base-path /wd/hub &
+appium &   # no --base-path — driverFactory.js's remote() call assumes the default "/" root path
 cd ../../qa-automation && npm run test:mobile   # also runs report:excel via posttest hook
 ```
 
