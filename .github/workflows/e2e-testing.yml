@@ -187,13 +187,20 @@ jobs:
           force-avd-creation: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
+          # reactivecircus/android-emulator-runner runs each line of this
+          # block as its own separate shell invocation — a bare `cd` on its
+          # own line does NOT persist to the next line (confirmed via a
+          # real failed run: "Missing script: test:mobile", because
+          # `npm run` executed from the checkout root, not qa-automation/,
+          # since the preceding `cd` had no effect). `cd X && command`
+          # combined on one line is required wherever a directory change
+          # matters.
           script: |
             npm install -g appium@latest
             appium driver install uiautomator2
             appium --port 4723 --log-timestamp > appium.log 2>&1 &
             npx --yes wait-on tcp:4723 --timeout 60000
-            cd qa-automation
-            npm run test:mobile
+            cd qa-automation && npm run test:mobile
         env:
           APPIUM_PORT: 4723
           DEVICE_NAME: emulator-5554
