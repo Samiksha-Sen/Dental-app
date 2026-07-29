@@ -20,3 +20,5 @@ qa-automation/logs/*
 !qa-automation/logs/.gitkeep
 qa-automation/testdata/generated/
 qa-automation/.env
+qa-automation/load-tests/reports/*
+!qa-automation/load-tests/reports/.gitkeep

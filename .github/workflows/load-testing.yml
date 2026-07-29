@@ -1,0 +1,62 @@
+name: Load & Performance Testing
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  load-testing:
+    runs-on: ubuntu-latest
+    env:
+      # 127.0.0.1, not localhost — avoids an IPv6-then-IPv4 connection
+      # fallback delay that shows up as several *seconds* of fake latency
+      # on some environments even though the backend itself is fast.
+      BACKEND_URL: http://127.0.0.1:5000
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install backend dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Locust
+        working-directory: qa-automation
+        run: pip install -r requirements.txt
+
+      - name: Start Flask backend
+        run: |
+          nohup python app.py > flask.log 2>&1 &
+          echo $! > flask.pid
+
+      - name: Wait for backend to become healthy
+        run: npx --yes wait-on ${{ env.BACKEND_URL }}/health --timeout 120000
+
+      - name: Run load test scenarios (verbose — prints each scenario and metric as it runs)
+        working-directory: qa-automation/load-tests
+        run: python -u run_scenarios.py
+
+      - name: Show Flask log on failure
+        if: failure()
+        run: cat flask.log
+
+      - name: Stop Flask backend
+        if: always()
+        run: kill "$(cat flask.pid)" 2>/dev/null || true
+
+      - name: Upload load test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: load-test-reports
+          path: |
+            qa-automation/load-tests/reports/*.csv
+            qa-automation/load-tests/reports/*.json

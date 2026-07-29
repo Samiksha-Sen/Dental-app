@@ -582,6 +582,91 @@ function buildGithubActionsResultsSheet(workbook, ghHistory) {
   return lastRow;
 }
 
+function buildCategorySheet(workbook, sheetName, catalog, category, extraColumns, extraRowFn) {
+  const sheet = workbook.addWorksheet(sheetName);
+  const baseColumns = [
+    { header: 'Test ID', key: 'id', width: 14 },
+    { header: 'Scenario', key: 'scenario', width: 50 },
+    { header: 'Test Data', key: 'testData', width: 30 },
+    { header: 'Steps', key: 'steps', width: 44 },
+    { header: 'Expected Result', key: 'expectedResult', width: 44 },
+  ];
+  sheet.columns = [...baseColumns, ...(extraColumns || []), { header: 'Priority', key: 'priority', width: 12 }, { header: 'Automation Status', key: 'automationStatus', width: 60 }, { header: 'Status', key: 'status', width: 14 }];
+  styleHeaderRow(sheet.getRow(1));
+  sheet.views = [{ state: 'frozen', ySplit: 1 }];
+  sheet.autoFilter = { from: 'A1', to: { row: 1, column: sheet.columns.length } };
+
+  const rows = catalog.filter((tc) => tc.category === category);
+  rows.forEach((tc) => {
+    const base = {
+      id: tc.id,
+      scenario: tc.scenario,
+      testData: tc.testData,
+      steps: tc.steps,
+      expectedResult: tc.expectedResult,
+      priority: tc.priority,
+      automationStatus: tc.automationStatus,
+      status: /^Automated/.test(tc.automationStatus) ? 'Not Executed (see Complete Test Cases for live status)' : 'Not Executed',
+    };
+    sheet.addRow(extraRowFn ? { ...base, ...extraRowFn(tc) } : base);
+  });
+
+  const lastRow = sheet.rowCount;
+  sheet.addConditionalFormatting({
+    ref: `${String.fromCharCode(65 + sheet.columns.length - 2)}2:${String.fromCharCode(65 + sheet.columns.length - 2)}${lastRow}`,
+    rules: [
+      { type: 'containsText', operator: 'containsText', text: 'Automated', style: { fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: 'FFC6EFCE' } } } },
+      { type: 'containsText', operator: 'containsText', text: 'Automatable', style: { fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: 'FFFFEB9C' } } } },
+      { type: 'containsText', operator: 'containsText', text: 'Manual', style: { fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: 'FFD9E1F2' } } } },
+    ],
+  });
+
+  return { sheet, rows, lastRow };
+}
+
+function buildSeleniumSheet(workbook, catalog) {
+  return buildCategorySheet(workbook, 'Selenium Web Tests', catalog, 'Selenium', [
+    { header: 'Generation Method', key: 'generationMethod', width: 46 },
+  ], (tc) => ({ generationMethod: tc.generationMethod || '-' }));
+}
+
+function buildVulnerabilitySheet(workbook, catalog) {
+  return buildCategorySheet(workbook, 'Vulnerability Testing', catalog, 'Vulnerability', [
+    { header: 'Generation Method', key: 'generationMethod', width: 46 },
+  ], (tc) => ({ generationMethod: tc.generationMethod || '-' }));
+}
+
+function buildLoadTestingSheet(workbook, catalog, loadTestSummary) {
+  const summaryIds = (loadTestSummary || []).map((r) => r.id);
+
+  // Cross-reference load-tests/reports/load-test-summary.json (real
+  // run_scenarios.py output) for the handful of scenarios that actually
+  // executed today — matched by scenario id substring against the row's
+  // own steps/testData text (loadTestExpansion.js embeds users/endpoint
+  // in both).
+  function matchSummary(tc) {
+    const haystack = `${tc.steps || ''} ${tc.testData || ''}`;
+    const endpointMatch = haystack.includes('/health') ? 'health' : haystack.includes('/predict') ? 'predict' : null;
+    if (!endpointMatch) return null;
+    const usersMatch = /users=(\d+)/.exec(tc.testData || '');
+    if (!usersMatch) return null;
+    const candidateId = `TC_LOAD_${endpointMatch}_${usersMatch[1]}u`;
+    return summaryIds.includes(candidateId) ? (loadTestSummary || []).find((r) => r.id === candidateId) : null;
+  }
+
+  return buildCategorySheet(workbook, 'Load Testing', catalog, 'LoadTest', [
+    { header: 'p95 (ms) — last CI run', key: 'p95Ms', width: 20 },
+    { header: 'Error Rate % — last CI run', key: 'errorRatePct', width: 22 },
+  ], (tc) => {
+    const result = matchSummary(tc);
+    return {
+      p95Ms: result ? result.p95Ms : '-',
+      errorRatePct: result ? result.errorRatePct : '-',
+      status: result ? result.status : (/^Automated/.test(tc.automationStatus) ? 'Not Executed (see reports/load-test-summary.json)' : 'Not Executed'),
+    };
+  });
+}
+
 function buildDashboardSheet(workbook, catalog, execByTestId, ghHistory) {
   const sheet = workbook.addWorksheet('Dashboard', { properties: { tabColor: { argb: 'FF1F2A44' } } });
   sheet.columns = Array(6).fill({ width: 20 });
@@ -688,6 +773,7 @@ async function buildReport() {
   const mapping = readJsonIfExists(path.join(ROOT, 'testdata', 'automationMapping.json'), []);
   const ghHistory = readJsonIfExists(path.join(ROOT, 'testdata', 'github-actions-history.json'), []);
   const apiCallLog = readJsonIfExists(path.join(REPORTS_DIR, 'api-call-log.json'), []);
+  const loadTestSummary = readJsonIfExists(path.join(ROOT, 'load-tests', 'reports', 'load-test-summary.json'), []);
 
   if (catalog.length === 0) {
     console.warn('testCaseCatalog.json is empty — run buildTestCatalogFromMarkdown.js first.');
@@ -715,6 +801,9 @@ async function buildReport() {
   buildApiSheet(workbook, catalog, apiCallLog);
   buildDatabaseSheet(workbook, catalog);
   buildAiModelSheet(workbook, catalog);
+  buildSeleniumSheet(workbook, catalog);
+  buildVulnerabilitySheet(workbook, catalog);
+  buildLoadTestingSheet(workbook, catalog, loadTestSummary);
   buildAutomationMappingSheet(workbook, mapping);
   buildDefectTrackingSheet(workbook);
   buildExecutionHistorySheet(workbook, ghHistory);

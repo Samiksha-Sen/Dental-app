@@ -1,5 +1,5 @@
 {
-  "reporterEnabled": "mochawesome, mocha-junit-reporter",
+  "reporterEnabled": "spec, mochawesome, mocha-junit-reporter",
   "mochawesomeReporterOptions": {
     "reportDir": "reports/mochawesome",
     "reportFilename": "mochawesome",

@@ -67,12 +67,12 @@ jobs:
 
       - name: Run API tests
         working-directory: qa-automation
-        run: pytest api-tests --junitxml=reports/junit/api-results.xml --json-report --json-report-file=reports/api-report.json
+        run: pytest api-tests -v --junitxml=reports/junit/api-results.xml --json-report --json-report-file=reports/api-report.json
 
       - name: Run database tests
         if: env.SUPABASE_URL != '' && env.SUPABASE_SERVICE_ROLE_KEY != ''
         working-directory: qa-automation
-        run: pytest database-tests --junitxml=reports/junit/database-results.xml --json-report --json-report-file=reports/database-report.json
+        run: pytest database-tests -v --junitxml=reports/junit/database-results.xml --json-report --json-report-file=reports/database-report.json
 
       - name: Skip notice for database tests
         if: env.SUPABASE_URL == '' || env.SUPABASE_SERVICE_ROLE_KEY == ''
@@ -261,9 +261,33 @@ jobs:
           name: mobile-e2e-reports
           path: qa-automation
 
-      - name: Refresh test case catalog from TEST_CASES.md
+      # Note: load-testing.yml is a separate workflow (its own run id), same
+      # pattern as selenium-e2e.yml / security-vulnerability.yml — its
+      # results aren't pulled into this run automatically (that needs a
+      # cross-workflow artifact lookup via the Actions API, not yet wired
+      # up). The Load Testing sheet below shows "Not Executed" from this
+      # job's perspective; the real numbers are load-testing.yml's own
+      # "load-test-reports" artifact on its own workflow run.
+
+      - name: Set up Python (for the live pip-audit snapshot)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      - name: Install frontend dependencies (for the live npm audit snapshot)
+        working-directory: dental_rn_app
+        run: npm ci
+
+      - name: Refresh dependency vulnerability snapshot
         working-directory: qa-automation
-        run: node utilities/buildTestCatalogFromMarkdown.js
+        run: node utilities/fetchDependencyAudit.js
+
+      - name: Build full test case catalog (TEST_CASES.md + Selenium/Appium/Vulnerability/Load expansions)
+        working-directory: qa-automation
+        run: node utilities/buildFullCatalog.js
 
       - name: Refresh GitHub Actions history
         working-directory: qa-automation
