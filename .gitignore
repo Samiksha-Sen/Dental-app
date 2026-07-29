@@ -8,3 +8,15 @@ uploads/*
 !uploads/.gitkeep
 .venv/
 *.log
+
+# QA automation framework — generated reports/artifacts, keep dirs via .gitkeep
+qa-automation/reports/**
+!qa-automation/reports/**/.gitkeep
+qa-automation/screenshots/*
+!qa-automation/screenshots/.gitkeep
+qa-automation/excel/*
+!qa-automation/excel/.gitkeep
+qa-automation/logs/*
+!qa-automation/logs/.gitkeep
+qa-automation/testdata/generated/
+qa-automation/.env

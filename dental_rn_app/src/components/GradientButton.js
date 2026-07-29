@@ -15,9 +15,10 @@ export default function GradientButton({
   loading,
   disabled,
   style,
+  testID,
 }) {
   return (
-    <Pressable onPress={disabled || loading ? undefined : onPress} style={[disabled && styles.disabled, style]}>
+    <Pressable testID={testID} onPress={disabled || loading ? undefined : onPress} style={[disabled && styles.disabled, style]}>
       {({ pressed }) => (
         <MotiView
           animate={{ scale: pressed ? 0.96 : 1, translateY: pressed ? 1 : 0 }}

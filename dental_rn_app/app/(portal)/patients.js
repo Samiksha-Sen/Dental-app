@@ -17,7 +17,7 @@ const STATUS_OPTIONS = ['Healthy Clear', 'Pending', 'Urgent Care'];
 
 function PatientCard({ p, expanded, onPress, onEdit, onDelete }) {
   return (
-    <PressableScale onPress={onPress} scaleTo={0.985} innerStyle={styles.patientCard}>
+    <PressableScale testID={`patient-card-${p.dbId || p.id}`} onPress={onPress} scaleTo={0.985} innerStyle={styles.patientCard}>
       <View style={styles.patientTop}>
         <Text style={styles.patientName}>{p.name}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
@@ -228,6 +228,7 @@ export default function Patients() {
         <View style={styles.searchRow}>
           <Search color={colors.textMuted} size={16} style={{ marginLeft: spacing.md }} />
           <TextInput
+            testID="patients-search-input"
             style={styles.searchInput}
             placeholder="Search by name, Patient ID, or phone..."
             placeholderTextColor={colors.textMuted}
@@ -236,7 +237,7 @@ export default function Patients() {
           />
         </View>
 
-        <TouchableOpacity style={styles.addBtn} onPress={() => setFormVisible(true)}>
+        <TouchableOpacity testID="patients-add-new-button" style={styles.addBtn} onPress={() => setFormVisible(true)}>
           <Plus color="#fff" size={16} />
           <Text style={styles.addBtnTxt}>Add New Patient</Text>
         </TouchableOpacity>
@@ -282,6 +283,7 @@ export default function Patients() {
             <ScrollView showsVerticalScrollIndicator={false}>
               <Text style={styles.label}>Patient Full Name</Text>
               <TextInput
+                testID="patient-form-name-input"
                 style={styles.input}
                 value={newPatientName}
                 onChangeText={setNewPatientName}
@@ -293,6 +295,7 @@ export default function Patients() {
               <View style={[styles.phoneInputRow, newPatientPhoneError && styles.phoneInputRowError]}>
                 <Phone color={colors.textMuted} size={16} />
                 <TextInput
+                  testID="patient-form-phone-input"
                   style={styles.phoneInput}
                   value={newPatientPhone}
                   onChangeText={onChangeNewPatientPhone}
@@ -306,6 +309,7 @@ export default function Patients() {
 
               <Text style={styles.label}>Age</Text>
               <TextInput
+                testID="patient-form-age-input"
                 style={[styles.input, newPatientAgeError && styles.inputError]}
                 value={newPatientAge}
                 onChangeText={onChangeNewPatientAge}
@@ -342,6 +346,7 @@ export default function Patients() {
               </View>
 
               <GradientButton
+                testID="patient-form-save-button"
                 title="Save Patient Profile"
                 icon={<User color="#fff" size={16} />}
                 onPress={onSave}

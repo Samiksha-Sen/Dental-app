@@ -61,6 +61,7 @@ export default function Login() {
           <GlassCard style={styles.card}>
             <ShimmerSweep />
             <FloatingInput
+              testID="login-email-input"
               label="Email"
               value={email}
               onChangeText={setEmail}
@@ -68,13 +69,14 @@ export default function Login() {
               keyboardType="email-address"
             />
             <FloatingInput
+              testID="login-password-input"
               label="Password"
               value={password}
               onChangeText={setPassword}
               placeholder="Enter your password"
               secureTextEntry
             />
-            <GradientButton title="Sign In" onPress={onSubmit} loading={loading} />
+            <GradientButton testID="login-submit-button" title="Sign In" onPress={onSubmit} loading={loading} />
           </GlassCard>
         </FadeSlideIn>
 

@@ -27,12 +27,14 @@ export default function ConfirmModal({
           {message ? <Text style={styles.msg}>{message}</Text> : null}
           <View style={styles.row}>
             <GradientButton
+              testID="confirm-modal-cancel-button"
               title={cancelLabel}
               onPress={onCancel}
               colorsOverride={[colors.bgElevated, colors.bgElevated]}
               style={{ flex: 1 }}
             />
             <GradientButton
+              testID="confirm-modal-confirm-button"
               title={confirmLabel}
               onPress={onConfirm}
               colorsOverride={danger ? gradients.danger : gradients.primary}

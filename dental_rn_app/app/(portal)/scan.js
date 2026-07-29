@@ -392,7 +392,7 @@ export default function Scan() {
             <Text style={styles.label}>AI Diagnostic Outcome</Text>
             <View style={[styles.outcomeBadge, { backgroundColor: isCaries ? colors.dangerBg : colors.successBg }]}>
               {isCaries ? <Sparkles color={accent} size={14} /> : <CheckCircle2 color={accent} size={14} />}
-              <Text style={[styles.outcomeTxt, { color: accent }]}>
+              <Text testID="scan-result-outcome" style={[styles.outcomeTxt, { color: accent }]}>
                 {isCaries ? 'Caries Found' : 'No Caries Detected'}
               </Text>
             </View>
@@ -471,7 +471,7 @@ export default function Scan() {
         </FadeSlideIn>
 
         <FadeSlideIn delay={120}>
-          <TouchableOpacity style={styles.dropzone} onPress={triggerUpload}>
+          <TouchableOpacity testID="scan-dropzone" style={styles.dropzone} onPress={triggerUpload}>
             <View style={styles.dropzoneIconWrap}>
               {(selectedImage || selectedFile) ? (
                 <CheckCircle2 color={colors.success} size={30} />
@@ -512,6 +512,7 @@ export default function Scan() {
         <FadeSlideIn delay={200}>
           {(selectedImage || selectedFile) ? (
             <GradientButton
+              testID="scan-analyse-button"
               title="Analyse X-Ray with AI Model"
               icon={<Sparkles color="#fff" size={17} />}
               onPress={startScan}

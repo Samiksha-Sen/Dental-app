@@ -55,6 +55,7 @@ export default function Dashboard() {
       <FadeSlideIn delay={80}>
         <View style={styles.statsRow}>
           <ClickableStatCard
+            testID="dashboard-stat-total-scans"
             icon={<Layers color={colors.primary} size={19} />}
             label="Total AI Scans"
             value={scanHistory.length}
@@ -62,6 +63,7 @@ export default function Dashboard() {
             onPress={() => router.push('/(portal)/dashboard/ai-scans')}
           />
           <ClickableStatCard
+            testID="dashboard-stat-severe-caries"
             icon={<ShieldAlert color={colors.danger} size={19} />}
             label="Severe Caries"
             value={patients.filter((p) => p.badge === 'urgent').length}
@@ -69,6 +71,7 @@ export default function Dashboard() {
             onPress={() => router.push('/(portal)/dashboard/severe-caries')}
           />
           <ClickableStatCard
+            testID="dashboard-stat-patients-tracked"
             icon={<UsersIcon color={colors.cyanLight} size={19} />}
             label="Patients Tracked"
             value={patients.length}

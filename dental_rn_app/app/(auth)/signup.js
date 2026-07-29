@@ -67,13 +67,13 @@ export default function Signup() {
 
       <FadeSlideIn delay={160}>
         <GlassCard>
-          <FloatingInput label="Full Name" value={doctorName} onChangeText={setDoctorName} placeholder="Dr. Jane Doe" />
-          <FloatingInput label="License No." value={licenseNo} onChangeText={setLicenseNo} placeholder="DDS-00000" />
-          <FloatingInput label="Clinic Name" value={clinicName} onChangeText={setClinicName} placeholder="Clinic Name" />
-          <FloatingInput label="Email" value={email} onChangeText={setEmail} placeholder="you@example.com" keyboardType="email-address" />
-          <FloatingInput label="Password" value={password} onChangeText={setPassword} placeholder="At least 8 characters" secureTextEntry />
-          <FloatingInput label="Confirm Password" value={confirmPassword} onChangeText={setConfirmPassword} placeholder="Re-enter password" secureTextEntry />
-          <GradientButton title="Create Account" onPress={onSubmit} loading={loading} colorsOverride={gradients.violet} />
+          <FloatingInput testID="signup-fullname-input" label="Full Name" value={doctorName} onChangeText={setDoctorName} placeholder="Dr. Jane Doe" />
+          <FloatingInput testID="signup-license-input" label="License No." value={licenseNo} onChangeText={setLicenseNo} placeholder="DDS-00000" />
+          <FloatingInput testID="signup-clinic-input" label="Clinic Name" value={clinicName} onChangeText={setClinicName} placeholder="Clinic Name" />
+          <FloatingInput testID="signup-email-input" label="Email" value={email} onChangeText={setEmail} placeholder="you@example.com" keyboardType="email-address" />
+          <FloatingInput testID="signup-password-input" label="Password" value={password} onChangeText={setPassword} placeholder="At least 8 characters" secureTextEntry />
+          <FloatingInput testID="signup-confirm-password-input" label="Confirm Password" value={confirmPassword} onChangeText={setConfirmPassword} placeholder="Re-enter password" secureTextEntry />
+          <GradientButton testID="signup-submit-button" title="Create Account" onPress={onSubmit} loading={loading} colorsOverride={gradients.violet} />
         </GlassCard>
       </FadeSlideIn>
 

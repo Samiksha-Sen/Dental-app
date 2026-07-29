@@ -7,11 +7,12 @@ import StatCard from '../StatCard';
 // hover elevation + press-scale so dashboard stat cards can act as full-card
 // navigation links, without changing StatCard's own API/behaviour.
 export default function ClickableStatCard(props) {
-  const { onPress, ...statCardProps } = props;
+  const { onPress, testID, ...statCardProps } = props;
   const [hovered, setHovered] = useState(false);
 
   return (
     <Pressable
+      testID={testID}
       onPress={onPress}
       onHoverIn={() => setHovered(true)}
       onHoverOut={() => setHovered(false)}

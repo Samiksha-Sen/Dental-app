@@ -1,0 +1,12 @@
+{
+  "reporterEnabled": "mochawesome, mocha-junit-reporter",
+  "mochawesomeReporterOptions": {
+    "reportDir": "reports/mochawesome",
+    "reportFilename": "mochawesome",
+    "quiet": true,
+    "overwrite": true
+  },
+  "mochaJunitReporterReporterOptions": {
+    "mochaFile": "reports/junit/mobile-results.xml"
+  }
+}

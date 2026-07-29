@@ -1,0 +1,7 @@
+{
+  "spec": "mobile-tests/**/*.test.js",
+  "require": ["mobile-tests/rootHooks.js"],
+  "timeout": 120000,
+  "reporter": "mocha-multi-reporters",
+  "reporterOptions": "configFile=mocha-multi-reporters.config.json"
+}

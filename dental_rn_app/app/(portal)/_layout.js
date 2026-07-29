@@ -69,6 +69,7 @@ export default function PortalLayout() {
         name="dashboard"
         options={{
           title: 'Dashboard',
+          tabBarTestID: 'tab-dashboard',
           tabBarIcon: ({ color, size }) => <LayoutDashboard color={color} size={size ?? 22} />,
         }}
       />
@@ -76,6 +77,7 @@ export default function PortalLayout() {
         name="scan"
         options={{
           title: 'Scan',
+          tabBarTestID: 'tab-scan',
           tabBarIcon: ({ color, size }) => <ScanLine color={color} size={size ?? 22} />,
         }}
       />
@@ -83,6 +85,7 @@ export default function PortalLayout() {
         name="appointments"
         options={{
           title: 'Appointments',
+          tabBarTestID: 'tab-appointments',
           tabBarIcon: ({ color, size }) => <CalendarDays color={color} size={size ?? 22} />,
         }}
       />
@@ -90,6 +93,7 @@ export default function PortalLayout() {
         name="patients"
         options={{
           title: 'Patients',
+          tabBarTestID: 'tab-patients',
           tabBarIcon: ({ color, size }) => <Users color={color} size={size ?? 22} />,
         }}
       />
@@ -97,6 +101,7 @@ export default function PortalLayout() {
         name="settings"
         options={{
           title: 'Settings',
+          tabBarTestID: 'tab-settings',
           tabBarIcon: ({ color, size }) => <Settings color={color} size={size ?? 22} />,
         }}
       />

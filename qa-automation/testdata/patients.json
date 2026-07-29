@@ -1,0 +1,8 @@
+[
+  { "case": "valid", "name": "Data Driven Patient One", "phone": "9812345670", "age": "29" },
+  { "case": "empty_name", "name": "", "phone": "9812345671", "age": "31" },
+  { "case": "invalid_phone_too_short", "name": "Data Driven Patient Two", "phone": "123", "age": "40" },
+  { "case": "invalid_phone_letters", "name": "Data Driven Patient Three", "phone": "98abc45671", "age": "27" },
+  { "case": "invalid_age_zero", "name": "Data Driven Patient Four", "phone": "9812345672", "age": "0" },
+  { "case": "invalid_age_over_119", "name": "Data Driven Patient Five", "phone": "9812345673", "age": "150" }
+]

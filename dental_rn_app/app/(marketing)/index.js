@@ -115,7 +115,7 @@ export default function HomeScreen() {
                 your patient EHR.
               </Text>
               <View style={[styles.ctaRow, !isWide && styles.ctaRowNarrow]}>
-                <Pressable onPress={() => router.push('/(auth)/login')}>
+                <Pressable testID="marketing-launch-demo-button" onPress={() => router.push('/(auth)/login')}>
                   <LinearGradient
                     colors={gradients.primary}
                     start={{ x: 0, y: 0 }}

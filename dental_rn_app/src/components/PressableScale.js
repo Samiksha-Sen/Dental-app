@@ -7,9 +7,9 @@ import { MotiView } from 'moti';
 // animated transform. moti/interactions' MotiPressable doesn't reliably
 // forward flex-based sizing to the DOM on web, causing flex:1 / width:'%'
 // children to collapse to content size instead of stretching.
-export default function PressableScale({ onPress, children, style, innerStyle, scaleTo = 0.96, disabled }) {
+export default function PressableScale({ onPress, children, style, innerStyle, scaleTo = 0.96, disabled, testID }) {
   return (
-    <Pressable onPress={disabled ? undefined : onPress} style={style} disabled={disabled}>
+    <Pressable testID={testID} onPress={disabled ? undefined : onPress} style={style} disabled={disabled}>
       {({ pressed }) => (
         <MotiView
           animate={{ scale: pressed ? scaleTo : 1 }}

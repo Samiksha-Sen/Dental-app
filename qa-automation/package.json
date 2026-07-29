@@ -1,0 +1,24 @@
+{
+  "name": "dental-app-qa-automation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Enterprise E2E automation framework for Dental-app: React Native/Expo mobile UI (Appium+Mocha+Chai), Flask API and Supabase database validation (PyTest).",
+  "scripts": {
+    "test:mobile": "mocha --config .mocharc.json",
+    "test:mobile:smoke": "mocha --config .mocharc.json --grep @smoke",
+    "report:excel": "node utilities/excelReporter.js",
+    "posttest:mobile": "npm run report:excel"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "chai": "^4.4.1",
+    "dotenv": "^16.4.5",
+    "exceljs": "^4.4.0",
+    "mocha": "^10.4.0",
+    "mocha-junit-reporter": "^2.2.1",
+    "mocha-multi-reporters": "^1.5.1",
+    "mochawesome": "^7.1.3",
+    "webdriverio": "^8.39.0",
+    "winston": "^3.13.0"
+  }
+}

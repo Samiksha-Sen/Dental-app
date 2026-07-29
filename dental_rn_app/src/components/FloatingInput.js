@@ -13,6 +13,7 @@ export default function FloatingInput({
   maxLength,
   icon,
   error,
+  testID,
 }) {
   const [focused, setFocused] = useState(false);
   const active = focused || !!value;
@@ -30,6 +31,7 @@ export default function FloatingInput({
       >
         {icon ? <View style={styles.iconWrap}>{icon}</View> : null}
         <TextInput
+          testID={testID}
           style={[styles.input, icon && styles.inputWithIcon]}
           value={value}
           onChangeText={onChangeText}

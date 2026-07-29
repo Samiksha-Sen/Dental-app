@@ -74,6 +74,7 @@ export default function Settings() {
             <Text style={styles.label}>AI Model API Endpoint URL</Text>
           </View>
           <TextInput
+            testID="settings-api-url-input"
             style={styles.input}
             value={apiUrl}
             onChangeText={setApiUrl}
@@ -121,7 +122,7 @@ export default function Settings() {
       </FadeSlideIn>
 
       <FadeSlideIn delay={240}>
-        <TouchableOpacity style={styles.logoutBtn} onPress={() => setConfirmVisible(true)}>
+        <TouchableOpacity testID="settings-logout-button" style={styles.logoutBtn} onPress={() => setConfirmVisible(true)}>
           <LogOut color={colors.danger} size={16} />
           <Text style={styles.logoutTxt}>Sign Out</Text>
         </TouchableOpacity>

@@ -1,0 +1,7 @@
+[
+  { "case": "valid", "email": "${TEST_USER_EMAIL}", "password": "${TEST_USER_PASSWORD}" },
+  { "case": "wrong_password", "email": "${TEST_USER_EMAIL}", "password": "wrong-password-123" },
+  { "case": "invalid_email_format", "email": "not-an-email", "password": "${TEST_USER_PASSWORD}" },
+  { "case": "empty_email", "email": "", "password": "${TEST_USER_PASSWORD}" },
+  { "case": "empty_password", "email": "${TEST_USER_EMAIL}", "password": "" }
+]

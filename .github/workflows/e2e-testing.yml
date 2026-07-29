@@ -1,0 +1,200 @@
+name: Enterprise E2E Automation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  # ---------------------------------------------------------------------
+  # API + Database tests: fast, no Android emulator needed. Runs the real
+  # Flask backend locally and exercises the actual /health and /predict
+  # contract, then validates Supabase table state directly.
+  # ---------------------------------------------------------------------
+  api-and-database-tests:
+    runs-on: ubuntu-latest
+    env:
+      BACKEND_URL: http://localhost:5000
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install backend dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install QA automation Python dependencies
+        run: pip install -r qa-automation/requirements.txt
+
+      - name: Start Flask backend
+        run: |
+          nohup python app.py > flask.log 2>&1 &
+          echo $! > flask.pid
+
+      - name: Wait for backend to become healthy
+        run: npx --yes wait-on http://localhost:5000/health --timeout 120000
+
+      - name: Run API tests
+        working-directory: qa-automation
+        run: pytest api-tests --junitxml=reports/junit/api-results.xml --json-report --json-report-file=reports/api-report.json
+
+      - name: Run database tests
+        if: env.SUPABASE_URL != '' && env.SUPABASE_SERVICE_ROLE_KEY != ''
+        working-directory: qa-automation
+        run: pytest database-tests --junitxml=reports/junit/database-results.xml --json-report --json-report-file=reports/database-report.json
+
+      - name: Skip notice for database tests
+        if: env.SUPABASE_URL == '' || env.SUPABASE_SERVICE_ROLE_KEY == ''
+        run: echo "::warning::Skipped database-tests — SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY secrets are not configured on this repository yet."
+
+      - name: Show Flask log on failure
+        if: failure()
+        run: cat flask.log
+
+      - name: Stop Flask backend
+        if: always()
+        run: kill "$(cat flask.pid)" 2>/dev/null || true
+
+      - name: Upload API/DB reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-database-reports
+          path: |
+            qa-automation/reports/junit/*.xml
+            qa-automation/reports/*.json
+
+  # ---------------------------------------------------------------------
+  # Mobile E2E: builds a real Android debug APK (expo prebuild + Gradle) and
+  # drives it with Appium inside a KVM-accelerated emulator. Deliberately
+  # NOT automating the published Expo Go app — its own launcher/QR-entry UI
+  # isn't ours to control and isn't designed for automation; a compiled
+  # debug build gives Appium a normal app with a stable package/activity.
+  # See qa-automation/README.md ("Why not Expo Go") for the full rationale.
+  # ---------------------------------------------------------------------
+  mobile-e2e:
+    runs-on: ubuntu-latest
+    needs: api-and-database-tests
+    # Needs a real Supabase test account to log in with — skips gracefully
+    # (shown as "skipped", not a failing red X) until TEST_USER_EMAIL /
+    # TEST_USER_PASSWORD / SUPABASE_URL / SUPABASE_KEY secrets are added to
+    # this repo (Settings > Secrets and variables > Actions). See
+    # qa-automation/README.md "Enabling the mobile E2E job".
+    if: ${{ secrets.TEST_USER_EMAIL != '' && secrets.SUPABASE_URL != '' }}
+    env:
+      BACKEND_URL: http://10.0.2.2:5000 # host loopback alias, as seen from inside the Android emulator
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+      TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+      APK_PATH: ${{ github.workspace }}/dental_rn_app/android/app/build/outputs/apk/debug/app-debug.apk
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: dental_rn_app/package-lock.json
+
+      - name: Set up Java (for Gradle/Android build)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install frontend dependencies
+        working-directory: dental_rn_app
+        run: npm ci
+
+      - name: Install QA automation Node dependencies
+        working-directory: qa-automation
+        run: npm ci
+
+      - name: Generate native Android project (expo prebuild)
+        working-directory: dental_rn_app
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Build debug APK
+        working-directory: dental_rn_app/android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Start Flask backend (for the emulator to call via 10.0.2.2)
+        run: |
+          pip install -r requirements.txt
+          nohup python app.py > flask.log 2>&1 &
+          echo $! > flask.pid
+
+      - name: Wait for backend to become healthy
+        run: npx --yes wait-on http://localhost:5000/health --timeout 120000
+
+      - name: Run Appium mobile E2E suite on an emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: |
+            npm install -g appium@2
+            appium driver install uiautomator2
+            appium --base-path /wd/hub --port 4723 --log-timestamp > appium.log 2>&1 &
+            npx --yes wait-on tcp:4723 --timeout 60000
+            cd qa-automation
+            npm run test:mobile
+        env:
+          APPIUM_PORT: 4723
+          DEVICE_NAME: emulator-5554
+          PLATFORM_VERSION: '14'
+
+      - name: Show Appium log on failure
+        if: failure()
+        run: cat appium.log || true
+
+      - name: Stop Flask backend
+        if: always()
+        run: kill "$(cat flask.pid)" 2>/dev/null || true
+
+      - name: Generate Excel report
+        if: always()
+        working-directory: qa-automation
+        run: npm run report:excel
+
+      - name: Upload mobile E2E artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-e2e-reports
+          path: |
+            qa-automation/reports/**
+            qa-automation/excel/**
+            qa-automation/screenshots/**
+            qa-automation/logs/**
+
+      - name: Publish JUnit test results to the Actions tab
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: E2E Test Results
+          path: 'qa-automation/reports/junit/*.xml'
+          reporter: java-junit
+          fail-on-error: false
