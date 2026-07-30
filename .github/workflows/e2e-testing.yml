@@ -86,12 +86,21 @@ jobs:
         if: always()
         run: kill "$(cat flask.pid)" 2>/dev/null || true
 
+      - name: Generate API and Database Excel reports (.xlsx)
+        if: always()
+        working-directory: qa-automation
+        run: |
+          npm install --no-save exceljs
+          node utilities/excelReporter.js
+          node utilities/testManagementReportGenerator.js || true
+
       - name: Upload API/DB reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: api-database-reports
           path: |
+            qa-automation/excel/*.xlsx
             qa-automation/reports/junit/*.xml
             qa-automation/reports/*.json
 

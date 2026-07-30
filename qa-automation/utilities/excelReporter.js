@@ -175,6 +175,12 @@ async function buildReport() {
   fs.mkdirSync(path.dirname(OUTPUT_PATH), { recursive: true });
   await workbook.xlsx.writeFile(OUTPUT_PATH);
   console.log(`Excel report written to ${OUTPUT_PATH} (${total} tests, ${passed} passed, ${failed} failed)`);
+
+  const apiDbReportPath = path.resolve(__dirname, '../excel/API_Database_Test_Report.xlsx');
+  if (OUTPUT_PATH !== apiDbReportPath) {
+    await workbook.xlsx.writeFile(apiDbReportPath);
+    console.log(`Excel report copy written to ${apiDbReportPath}`);
+  }
 }
 
 if (require.main === module) {
