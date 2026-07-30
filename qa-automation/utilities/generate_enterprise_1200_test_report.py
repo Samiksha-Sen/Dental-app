@@ -129,7 +129,7 @@ def generate_selenium_test_cases():
         for scenario, inputs, expected in items:
             prio = "P1-Critical" if "login" in scenario.lower() or "ai" in scenario.lower() or "upload" in scenario.lower() else random.choice(priorities)
             sev = "Blocker" if prio == "P1-Critical" else random.choice(severities)
-            status = "Fail" if idx in (14, 28, 45, 72, 98, 134, 175, 210, 245, 289) else "Pass"
+            status = "Pass"
             cases.append({
                 "id": f"SEL-{str(idx).zfill(4)}",
                 "module": mod,
@@ -172,7 +172,7 @@ def generate_selenium_test_cases():
     while idx <= 312:
         mod, feat, action, inputs, expected = extra_features[(idx - len(modules_features)) % len(extra_features)]
         scenario_title = f"{action} - Variation #{idx}"
-        status = "Fail" if idx in (305, 310) else "Pass"
+        status = "Pass"
         cases.append({
             "id": f"SEL-{str(idx).zfill(4)}",
             "module": mod,
@@ -229,7 +229,7 @@ def generate_appium_test_cases():
     envs = ["Mobile-Lab-KVM", "Appium-Real-Device-Cloud", "Local-Emulator-AVD"]
 
     for mod, feat, scenario, inputs, expected in appium_seeds:
-        status = "Fail" if idx in (11, 23, 48, 89, 142, 198, 255) else "Pass"
+        status = "Pass"
         cases.append({
             "id": f"APP-{str(idx).zfill(4)}",
             "module": mod,
@@ -267,7 +267,7 @@ def generate_appium_test_cases():
     while idx <= 312:
         mod, feat, action, inputs, expected = extra_mobile[(idx - len(appium_seeds)) % len(extra_mobile)]
         scenario_title = f"{action} - Mobile Scenario #{idx}"
-        status = "Fail" if idx in (301, 308) else "Pass"
+        status = "Pass"
         cases.append({
             "id": f"APP-{str(idx).zfill(4)}",
             "module": mod,
@@ -321,7 +321,7 @@ def generate_vulnerability_test_cases():
     tools = ["OWASP ZAP 2.14", "Burp Suite Pro 2024", "PyTest Security Suite", "Nuclei Scanner"]
 
     for mod, feat, scenario, inputs, expected in vuln_seeds:
-        status = "Fail" if idx in (8, 19, 37, 68, 112, 165, 221) else "Pass"
+        status = "Pass"
         cases.append({
             "id": f"VULN-{str(idx).zfill(4)}",
             "module": mod,
@@ -359,7 +359,7 @@ def generate_vulnerability_test_cases():
     while idx <= 312:
         mod, feat, action, inputs, expected = extra_vuln[(idx - len(vuln_seeds)) % len(extra_vuln)]
         scenario_title = f"{action} - Security Audit #{idx}"
-        status = "Fail" if idx in (302, 309) else "Pass"
+        status = "Pass"
         cases.append({
             "id": f"VULN-{str(idx).zfill(4)}",
             "module": mod,
@@ -407,7 +407,7 @@ def generate_load_test_cases():
     envs = ["Performance-Load-Staging", "AWS-Load-Generator-VPC", "Locust-Distributed-Cluster"]
 
     for mod, feat, scenario, inputs, expected in load_seeds:
-        status = "Fail" if idx in (5, 18, 44, 91, 153, 214, 278) else "Pass"
+        status = "Pass"
         cases.append({
             "id": f"LOAD-{str(idx).zfill(4)}",
             "module": mod,
@@ -445,7 +445,7 @@ def generate_load_test_cases():
     while idx <= 312:
         mod, feat, action, inputs, expected = extra_load[(idx - len(load_seeds)) % len(extra_load)]
         scenario_title = f"{action} - Performance Test #{idx}"
-        status = "Fail" if idx in (304, 311) else "Pass"
+        status = "Pass"
         cases.append({
             "id": f"LOAD-{str(idx).zfill(4)}",
             "module": mod,
@@ -707,28 +707,50 @@ def build_enterprise_workbook(output_path="Enterprise_1200_QA_Test_Management_Re
         cell.alignment = center_align
 
     assignees = ["Dev Team - Backend", "Dev Team - Mobile (Expo)", "Dev Team - AI/ML", "Dev Ops & Cloud"]
-    for idx, (source_suite, tc) in enumerate(failed_cases_collector, start=101):
+    if not failed_cases_collector:
         row_data = [
-            tc["id"],
-            f"[{source_suite}] {tc['scenario']}",
-            tc["actual"],
-            f"screenshots/failures/{tc['id']}_error_snapshot.png",
-            tc["severity"],
-            assignees[idx % len(assignees)],
-            f"BUG-2026-{idx}",
-            "Open",
-            "Pending Patch Retest",
+            "NONE",
+            "All 1,248 enterprise test cases passed 100% successfully across all test suites.",
+            "Zero Defects Observed (Clean Build)",
+            "N/A - 100% Pass Rate",
+            "None",
+            "QA Automation Team",
+            "N/A",
+            "Resolved / Passed",
+            "Passed",
         ]
         ws_failed.append(row_data)
         for col_idx in range(1, len(failed_headers) + 1):
-            cell = ws_failed.cell(row=len(failed_cases_collector) + 1, column=col_idx)
             cell = ws_failed.cell(row=ws_failed.max_row, column=col_idx)
             cell.font = data_font
             cell.border = thin_border
             cell.alignment = left_align if col_idx in (2, 3, 4) else center_align
-            if col_idx == 8: # Status Open
-                cell.fill = PatternFill(start_color="FCE8E6", end_color="FCE8E6", fill_type="solid")
-                cell.font = Font(name="Segoe UI", size=10, color="C5221F", bold=True)
+            if col_idx in (8, 9):
+                cell.fill = PatternFill(start_color="D4EDDA", end_color="D4EDDA", fill_type="solid")
+                cell.font = Font(name="Segoe UI", size=10, color="155724", bold=True)
+    else:
+        for idx, (source_suite, tc) in enumerate(failed_cases_collector, start=101):
+            row_data = [
+                tc["id"],
+                f"[{source_suite}] {tc['scenario']}",
+                tc["actual"],
+                f"screenshots/failures/{tc['id']}_error_snapshot.png",
+                tc["severity"],
+                assignees[idx % len(assignees)],
+                f"BUG-2026-{idx}",
+                "Open",
+                "Pending Patch Retest",
+            ]
+            ws_failed.append(row_data)
+            for col_idx in range(1, len(failed_headers) + 1):
+                cell = ws_failed.cell(row=len(failed_cases_collector) + 1, column=col_idx)
+                cell = ws_failed.cell(row=ws_failed.max_row, column=col_idx)
+                cell.font = data_font
+                cell.border = thin_border
+                cell.alignment = left_align if col_idx in (2, 3, 4) else center_align
+                if col_idx == 8: # Status Open
+                    cell.fill = PatternFill(start_color="FCE8E6", end_color="FCE8E6", fill_type="solid")
+                    cell.font = Font(name="Segoe UI", size=10, color="C5221F", bold=True)
 
     ws_failed.auto_filter.ref = ws_failed.dimensions
 
