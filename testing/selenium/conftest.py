@@ -11,7 +11,7 @@ def base_url():
     return BASE_URL
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def driver():
     options = Options()
     options.add_argument("--headless=new")
