@@ -12,11 +12,12 @@ import os
 
 import pytest
 from supabase import create_client
+from utilities.supabase_client import normalize_supabase_url
 
 
 @pytest.fixture(scope="session")
-def anon_supabase():
-    url = os.environ["SUPABASE_URL"]
+def anon_supabase(normalize_env_supabase_url):
+    url = normalize_supabase_url(os.environ["SUPABASE_URL"])
     key = os.environ["SUPABASE_KEY"]  # anon/public key, not the service role
     return create_client(url, key)
 

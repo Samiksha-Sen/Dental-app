@@ -1,3 +1,4 @@
+import os
 import sys
 import uuid
 from pathlib import Path
@@ -6,11 +7,17 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from utilities.supabase_client import get_test_supabase_client  # noqa: E402
+from utilities.supabase_client import get_test_supabase_client, normalize_supabase_url  # noqa: E402
+
+
+@pytest.fixture(scope="session", autouse=True)
+def normalize_env_supabase_url():
+    if "SUPABASE_URL" in os.environ and os.environ["SUPABASE_URL"]:
+        os.environ["SUPABASE_URL"] = normalize_supabase_url(os.environ["SUPABASE_URL"])
 
 
 @pytest.fixture(scope="session")
-def supabase():
+def supabase(normalize_env_supabase_url):
     return get_test_supabase_client()
 
 

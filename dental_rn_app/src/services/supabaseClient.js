@@ -1,8 +1,27 @@
 import { createClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
 
+function normalizeSupabaseUrl(url) {
+  if (!url) return url;
+  let clean = String(url)
+    .trim()
+    .replace(/\/+$/, '');
+  const match = clean.match(
+    /(?:supabase\.(?:com|io|co)|app\.supabase\.com)\/(?:dashboard\/)?(?:project|studio)\/([a-zA-Z0-9_-]+)/i
+  );
+  if (match && match[1]) {
+    return `https://${match[1]}.supabase.co`;
+  }
+  clean = clean.replace(/\/(?:rest|auth|storage|realtime|functions)\/v1$/, '');
+  if (!clean.startsWith('http://') && !clean.startsWith('https://')) {
+    clean = `https://${clean}`;
+  }
+  return clean;
+}
+
 // Read credentials strictly from environment variables (Requirement 2, 12, 13)
-const supabaseUrl = process.env.SUPABASE_URL || process.env.EXPO_PUBLIC_SUPABASE_URL;
+const rawUrl = process.env.SUPABASE_URL || process.env.EXPO_PUBLIC_SUPABASE_URL;
+const supabaseUrl = normalizeSupabaseUrl(rawUrl);
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
@@ -26,3 +45,5 @@ export const supabase = createClient(supabaseUrl || 'https://placeholder.supabas
     detectSessionInUrl: Platform.OS === 'web',
   },
 });
+
+export { normalizeSupabaseUrl };
