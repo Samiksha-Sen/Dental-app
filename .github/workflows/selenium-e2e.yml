@@ -55,9 +55,16 @@ jobs:
           BASE_URL: http://localhost:8080
         run: pytest -v --junitxml=results.xml
 
+      - name: Generate Selenium Excel report (.xlsx)
+        if: always()
+        working-directory: testing/selenium
+        run: python generate_excel_report.py
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: selenium-results
-          path: testing/selenium/results.xml
+          path: |
+            testing/selenium/*.xlsx
+            testing/selenium/results.xml

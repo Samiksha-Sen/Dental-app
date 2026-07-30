@@ -52,11 +52,17 @@ jobs:
         if: always()
         run: kill "$(cat flask.pid)" 2>/dev/null || true
 
+      - name: Generate Load Testing Excel report (.xlsx)
+        if: always()
+        working-directory: qa-automation/load-tests
+        run: python generate_excel_report.py
+
       - name: Upload load test reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: load-test-reports
           path: |
+            qa-automation/load-tests/reports/*.xlsx
             qa-automation/load-tests/reports/*.csv
             qa-automation/load-tests/reports/*.json
