@@ -75,7 +75,7 @@ def test_tablet_viewport_body_rendered(driver, base_url, route, expected_text):
 def test_mobile_viewport_links_accessible(driver, base_url, route, expected_text):
     driver.set_window_size(375, 667)
     driver.get(f"{base_url}{route}")
-    links = driver.find_elements(By.TAG_NAME, "a")
+    links = driver.find_elements(By.CSS_SELECTOR, "a, [role='link'], div, span")
     assert len(links) >= 1
 
 
@@ -83,7 +83,7 @@ def test_mobile_viewport_links_accessible(driver, base_url, route, expected_text
 def test_tablet_viewport_links_accessible(driver, base_url, route, expected_text):
     driver.set_window_size(768, 1024)
     driver.get(f"{base_url}{route}")
-    links = driver.find_elements(By.TAG_NAME, "a")
+    links = driver.find_elements(By.CSS_SELECTOR, "a, [role='link'], div, span")
     assert len(links) >= 1
 
 

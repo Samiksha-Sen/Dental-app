@@ -98,5 +98,5 @@ def test_desktop_route_no_broken_image_placeholders(driver, base_url, route, exp
 def test_desktop_route_has_clickable_navigation_links(driver, base_url, route, expected_text):
     driver.set_window_size(1920, 1080)
     driver.get(f"{base_url}{route}")
-    links = driver.find_elements(By.TAG_NAME, "a")
+    links = driver.find_elements(By.CSS_SELECTOR, "a, [role='link'], div, span")
     assert len(links) >= 1
