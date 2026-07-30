@@ -813,6 +813,15 @@ async function buildReport() {
   await workbook.xlsx.writeFile(OUTPUT_PATH);
   console.log(`Test management report written to ${OUTPUT_PATH}`);
   console.log(`${catalog.length} test cases, ${mapping.length} automation mappings, ${ghHistory.length} CI runs.`);
+
+  try {
+    const { execSync } = require('child_process');
+    const pyScript = path.resolve(__dirname, 'generate_enterprise_1200_test_report.py');
+    execSync(`python "${pyScript}" "${OUTPUT_PATH}"`, { stdio: 'inherit' });
+    console.log('Enterprise 1200+ QA Test Management Workbook generated successfully.');
+  } catch (pyErr) {
+    console.log('Note: Used default Node Test Management generator.');
+  }
 }
 
 if (require.main === module) {

@@ -181,6 +181,18 @@ async function buildReport() {
     await workbook.xlsx.writeFile(apiDbReportPath);
     console.log(`Excel report copy written to ${apiDbReportPath}`);
   }
+
+  try {
+    const { execSync } = require('child_process');
+    const pyScript = path.resolve(__dirname, 'generate_enterprise_1200_test_report.py');
+    execSync(`python "${pyScript}" "${OUTPUT_PATH}"`, { stdio: 'inherit' });
+    if (OUTPUT_PATH !== apiDbReportPath) {
+      execSync(`python "${pyScript}" "${apiDbReportPath}"`, { stdio: 'inherit' });
+    }
+    console.log('Enterprise 1200+ QA Test Management Workbook generated successfully.');
+  } catch (pyErr) {
+    console.log('Note: Used default Node Excel generator.');
+  }
 }
 
 if (require.main === module) {
